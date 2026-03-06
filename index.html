@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Bombe: Ultra High-Speed Decryptor</title>
+    <title>The Bombe: Logical Decryptor</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
         body { background: #050505; color: #ccc; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -36,15 +36,13 @@
             </div>
             <div class="panel-box">
                 <button id="run-btn" onclick="toggleBombe()">RUN MOTOR</button>
-                <div style="margin-top:20px; font-size:14px; text-align:center">
-                    POS: <span id="pos-display" style="color:#b08d57">AAA</span>
-                </div>
+                <div style="margin-top:20px; font-size:14px; text-align:center">POS: <span id="pos-display" style="color:#b08d57">AAA</span></div>
             </div>
         </div>
     </div>
 <script>
     const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    let isRunning = false, p = [0,0,0], target = "AAA"; // This is what it searches for
+    let isRunning = false, p = [0,0,0], target = "AAA"; 
     function init() {
         const r = document.getElementById('rack');
         for(let i=0; i<36; i++) r.innerHTML += `<div class="drum" id="d-${i}">A</div>`;
@@ -64,14 +62,10 @@
     }
     function scan() {
         if(!isRunning) return;
-        p[2]++;
-        if(p[2]>=26){ p[2]=0; p[1]++; }
-        if(p[1]>=26){ p[1]=0; p[0]++; }
         const pos = alpha[p[0]] + alpha[p[1]] + alpha[p[2]];
         document.getElementById('pos-display').innerText = pos;
         const log = document.getElementById('log');
-        
-        // Logical matching
+
         if(pos === target) {
             log.innerHTML = `<span style="color:yellow">*** VALID CHAIN FOUND AT ${pos} ***</span><br>` + log.innerHTML;
             document.getElementById('stop-lamp').classList.add('hit');
@@ -80,6 +74,10 @@
         } else {
             log.innerHTML = `> TESTING ${pos}: CONTRADICTION<br>` + log.innerHTML;
             if(log.childNodes.length > 20) log.innerHTML = log.innerHTML.split('<br>').slice(0,20).join('<br>');
+            // Step rotors AFTER checking
+            p[2]++;
+            if(p[2]>=26){ p[2]=0; p[1]++; }
+            if(p[1]>=26){ p[1]=0; p[0]++; }
             setTimeout(scan, 20);
         }
     }
