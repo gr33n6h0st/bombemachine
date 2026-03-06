@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Bombe: Ultra Decryptor</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
+
+        :root {
+            --bakelite: #1a1a1a;
+            --brass: #b08d57;
+            --case-grey: #2e2e2e;
+            --indicator-red: #ff3300;
+            --wire-red: #8b0000;
+        }
+
+        body {
+            background-color: #050505;
+            color: #ccc;
+            font-family: 'Special Elite', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .bombe-frame {
+            background: linear-gradient(145deg, #333, #111);
+            border: 12px solid #000;
+            border-radius: 4px;
+            padding: 40px;
+            width: 950px;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.9);
+            position: relative;
+        }
+
+        h1 { color: var(--brass); text-align: center; margin-top: 0; letter-spacing: 5px; font-size: 28px; }
+
+        /* --- THE DRUM RACK --- */
+        .drum-rack {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 15px;
+            background: rgba(0,0,0,0.4);
+            padding: 20px;
+            border: 2px solid #222;
+            margin-bottom: 30px;
+        }
+
+        .drum-container { text-align: center; position: relative; }
+        
+        .drum {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #444, #111, #444, #111, #444);
+            border: 4px solid var(--bakelite);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--brass);
+            transition: transform 0.1s steps(26);
+            box-shadow: 0 4px 10px #000;
+        }
+
+        .drum::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Spinning Animation */
+        .spinning { animation: drumSpin 2s linear infinite; }
+        @keyframes drumSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* --- CONTROL PANEL --- */
+        .panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 20px;
+        }
+
+        .sub-panel {
+            background: #151515;
+            border: 2px solid #333;
+            padding: 15px;
+            border-radius: 3px;
+            box-shadow: inset 0 0 10px #000;
+        }
+
+        .monitor-screen {
+            background: #001a00;
+            border: 2px solid #003300;
+            height: 150px;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: #00ff41;
+            padding: 10px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+
+        .lamp-indicator {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: #200;
+            margin: 10px auto;
+            border: 2px solid #111;
+        }
+
+        .lamp-indicator.active {
+            background: radial-gradient(circle, #ff0000, #400);
+            box-shadow: 0 0 15px #ff0000;
+        }
+
+        .btn-start { 
+            background: #4a0000; color: #fff; width: 100%; padding: 15px; 
+            border: 3px solid #000; font-family: 'Special Elite'; cursor: pointer;
+            font-size: 18px; margin-top: 10px;
+        }
+
+        .btn-start:active { transform: translateY(2px); background: #600; }
+
+        .settings-input {
+            background: #000; border: 1px solid var(--brass); color: var(--brass);
+            width: 100%; padding: 5px; margin-top: 10px; font-family: 'Fira Code';
+        }
+
+        .dial-label { font-size: 10px; color: #777; text-transform: uppercase; margin-top: 5px; }
+
+    </style>
+</head>
+<body onload="init()">
+
+    <div class="bombe-frame">
+        <h1>BOMBE RE-CONSTRUCTION - MODEL G</h1>
+        
+        <div class="drum-rack" id="main-rack"></div>
+
+        <div class="panel-grid">
+            <div class="sub-panel">
+                <div class="dial-label">Target Menu (Crib)</div>
+                <input type="text" id="crib-input" class="settings-input" value="WETTERVORHERSAGE">
+                <div class="dial-label">Current Rotor Chain</div>
+                <div style="font-size: 18px; color: var(--brass); margin-top: 10px;">IV - II - V</div>
+                <div class="lamp-indicator" id="stop-lamp"></div>
+                <div style="text-align: center; font-size: 10px;">STOP INDICATOR</div>
+            </div>
+
+            <div class="sub-panel">
+                <div class="dial-label">Logical Contradiction Trace</div>
+                <div class="monitor-screen" id="trace-out">
+                    > SYSTEM READY...<br>
+                    > LOAD CRIB DATA...<br>
+                    > VOLTAGE STABLE...
+                </div>
+            </div>
+
+            <div class="sub-panel">
+                <button class="btn-start" id="run-btn" onclick="startSearch()">RUN MOTOR</button>
+                <button class="btn-start" style="background:#222; font-size: 12px;" onclick="resetBombe()">RESET RACK</button>
+                <div style="margin-top: 15px; font-size: 11px;">
+                    <strong>CURRENT TEST:</strong><br>
+                    <span id="test-pos">POS: AAA</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let isRunning = false;
+    let currentPos = [0, 0, 0];
+
+    function init() {
+        const rack = document.getElementById('main-rack');
+        // Create 36 drums
+        for(let i=0; i<36; i++) {
+            rack.innerHTML += `
+                <div class="drum-container">
+                    <div class="drum" id="drum-${i}">A</div>
+                    <div class="dial-label">${i+1}</div>
+                </div>`;
+        }
+    }
+
+    function startSearch() {
+        if (isRunning) {
+            stopSearch();
+            return;
+        }
+        
+        isRunning = true;
+        document.getElementById('run-btn').innerText = "STOP MOTOR";
+        document.getElementById('run-btn').style.background = "#222";
+        
+        const drums = document.querySelectorAll('.drum');
+        drums.forEach(d => d.classList.add('spinning'));
+        
+        processStep();
+    }
+
+    function stopSearch() {
+        isRunning = false;
+        document.getElementById('run-btn').innerText = "RUN MOTOR";
+        document.getElementById('run-btn').style.background = "#4a0000";
+        const drums = document.querySelectorAll('.drum');
+        drums.forEach(d => d.classList.remove('spinning'));
+    }
+
+    function processStep() {
+        if (!isRunning) return;
+
+        // Simulate stepping through Enigma positions
+        currentPos[2]++;
+        if(currentPos[2] >= 26) { currentPos[2] = 0; currentPos[1]++; }
+        if(currentPos[1] >= 26) { currentPos[1] = 0; currentPos[0]++; }
+        
+        const posString = alpha[currentPos[0]] + alpha[currentPos[1]] + alpha[currentPos[2]];
+        document.getElementById('test-pos').innerText = "POS: " + posString;
+
+        // Update random drums to look like they are working
+        const randomDrum = Math.floor(Math.random() * 36);
+        document.getElementById(`drum-${randomDrum}`).innerText = alpha[Math.floor(Math.random() * 26)];
+
+        // Simulate a "Check"
+        const monitor = document.getElementById('trace-out');
+        let entry = document.createElement('div');
+        entry.innerHTML = `> TEST ${posString}: CONTRADICTION FOUND AT BANK ${Math.floor(Math.random()*3)+1}`;
+        monitor.prepend(entry);
+
+        // Keep monitor clean
+        if (monitor.childNodes.length > 10) monitor.removeChild(monitor.lastChild);
+
+        // Rare "Hit" simulation
+        if (Math.random() > 0.98) {
+            foundStop(posString);
+        } else {
+            setTimeout(processStep, 50);
+        }
+    }
+
+    function foundStop(pos) {
+        stopSearch();
+        document.getElementById('stop-lamp').classList.add('active');
+        document.getElementById('trace-out').innerHTML = `<div style="color:yellow; font-weight:bold;">*** STOP FOUND AT ${pos} ***</div>` + document.getElementById('trace-out').innerHTML;
+        alert("BOMBE STOP: Potential rotor setting found at " + pos);
+    }
+
+    function resetBombe() {
+        stopSearch();
+        currentPos = [0,0,0];
+        document.getElementById('stop-lamp').classList.remove('active');
+        document.getElementById('test-pos').innerText = "POS: AAA";
+        document.getElementById('trace-out').innerHTML = "> SYSTEM RESET... READY";
+        document.querySelectorAll('.drum').forEach(d => d.innerText = "A");
+    }
+</script>
+</body>
+</html>
