@@ -2,75 +2,91 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Turing-Welchman Bombe: Full Decryptor</title>
+    <title>The Turing-Welchman Bombe: Engineering Lab</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
-        :root { --bakelite: #2d1b0d; --brass: #b08d57; --aluminum: #a5a5a5; }
-        body { background: #0a0a0a; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .bombe-enclosure { background: #1a1a1a; border: 10px solid #000; padding: 30px; width: 940px; box-shadow: 0 50px 100px #000; border-radius: 8px; }
-        .museum-label { text-align: center; color: var(--brass); letter-spacing: 5px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; text-transform: uppercase; }
+        :root { --bakelite: #2d1b0d; --brass: #b08d57; --rim: #111; }
+        body { background: #080808; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        .chassis { background: #1a1a1a; border: 12px solid #000; padding: 40px; width: 960px; box-shadow: 0 50px 100px #000; border-radius: 4px; }
+        .header { text-align: center; color: var(--brass); letter-spacing: 6px; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; text-transform: uppercase; }
         
-        /* The Drum Rack */
-        .drum-rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; background: #000; padding: 20px; margin-bottom: 25px; border: 2px solid #222; }
-        .scrambler-drum {
-            width: 58px; height: 58px; border-radius: 50%;
-            background: radial-gradient(circle, var(--aluminum) 0%, var(--bakelite) 40%, #000 100%);
-            border: 4px solid #3e2723; display: flex; align-items: center; justify-content: center;
-            font-size: 24px; font-weight: bold; color: #fff; text-shadow: 0 2px 4px #000;
-            box-shadow: 0 5px 15px #000; cursor: pointer;
+        /* THE DRUM RACK */
+        .rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; background: #050505; padding: 25px; margin-bottom: 30px; border: 3px solid #222; box-shadow: inset 0 0 20px #000; }
+        .drum-container { display: flex; flex-direction: column; align-items: center; }
+        
+        /* REALISTIC ROTOR DESIGN */
+        .drum {
+            width: 65px; height: 65px; border-radius: 50%;
+            background: radial-gradient(circle, #444 0%, #111 100%);
+            border: 5px solid #333; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 15px #000; transition: transform 0.05s linear;
         }
+        /* Alphabet Ring around the edge */
+        .drum::after {
+            content: "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z";
+            position: absolute; width: 100%; height: 100%;
+            font-size: 7px; color: #fff; word-spacing: 2px;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; white-space: pre-wrap; letter-spacing: 1px;
+        }
+        .drum-letter { font-size: 22px; font-weight: bold; color: var(--brass); z-index: 2; text-shadow: 0 0 5px #000; }
 
-        /* Speed Animations */
-        .spin-fast { animation: rot 0.15s linear infinite; }
-        .spin-mid { animation: rot 1.2s linear infinite; }
-        .spin-slow { animation: rot 4s linear infinite; }
-        @keyframes rot { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        /* PANELS */
+        .panel-grid { display: grid; grid-template-columns: 1.2fr 1.5fr 1fr; gap: 20px; }
+        .sub-panel { background: #111; border: 2px solid #333; padding: 20px; border-radius: 4px; box-shadow: inset 0 0 10px #000; }
+        .label { font-size: 11px; color: #777; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        input { background: #000; color: #00ff41; border: 1px solid #444; padding: 10px; font-family: 'Fira Code'; font-size: 14px; width: 90%; margin-bottom: 15px; text-transform: uppercase; }
+        
+        .screen { background: #001200; color: #00ff41; height: 150px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #003300; line-height: 1.4; box-shadow: inset 0 0 10px #000; }
+        
+        button { background: #5c1111; color: white; border: 4px solid #000; padding: 20px; cursor: pointer; font-family: 'Special Elite'; font-weight: bold; font-size: 18px; width: 100%; box-shadow: 0 5px 0 #333; }
+        button:hover { background: #8b0000; }
+        button:active { transform: translateY(3px); box-shadow: 0 2px 0 #333; }
 
-        .panel-deck { display: grid; grid-template-columns: 1.2fr 1.5fr 1fr; gap: 20px; }
-        .sub-panel { background: #111; border: 2px solid #333; padding: 15px; border-radius: 4px; display: flex; flex-direction: column; }
-        
-        .label { font-size: 11px; color: #888; margin-bottom: 5px; text-transform: uppercase; }
-        input { background: #000; color: var(--brass); border: 1px solid #444; padding: 10px; font-family: 'Special Elite'; font-size: 16px; margin-bottom: 12px; }
-        
-        .phosphor-screen { background: #001a00; color: #00ff41; height: 180px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #003300; line-height: 1.5; }
-        
-        button { background: #4a0000; color: white; border: 3px solid #000; padding: 18px; cursor: pointer; font-family: 'Special Elite'; font-weight: bold; font-size: 18px; box-shadow: 0 4px #000; }
-        button:active { transform: translateY(2px); box-shadow: 0 2px #000; }
+        .lamp { width: 35px; height: 35px; border-radius: 50%; background: #200; border: 3px solid #000; margin: 15px auto; }
+        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; border-color: #ff9999; }
+        .odo { font-size: 36px; color: var(--brass); background: #000; padding: 10px; border: 1px solid #333; text-align: center; margin: 10px 0; border-radius: 4px; letter-spacing: 8px; }
 
-        .stop-lamp { width: 35px; height: 35px; border-radius: 50%; background: #200; border: 3px solid #000; align-self: center; margin: 10px 0; }
-        .stop-lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; border-color: #ff9999; }
-        .odometer { font-size: 32px; color: var(--brass); background: #000; padding: 10px; border: 1px solid #333; text-align: center; margin: 10px 0; letter-spacing: 5px;}
+        /* INSTRUCTOR CONSOLE - HIDDEN BY DEFAULT */
+        .instructor-drawer { margin-top: 40px; padding: 20px; background: #0a0a0a; border: 1px dashed #333; width: 940px; opacity: 0.3; transition: 0.3s; }
+        .instructor-drawer:hover { opacity: 1; }
     </style>
 </head>
 <body onload="init()">
 
-    <div class="bombe-enclosure">
-        <h1 class="museum-label">Turing-Welchman Bombe - Model G</h1>
-        <div class="drum-rack" id="rack"></div>
+    <div class="chassis">
+        <h1 class="header">Welchman-Turing Bombe - Model G</h1>
+        <div class="rack" id="rack"></div>
 
-        <div class="panel-deck">
+        <div class="panel-grid">
             <div class="sub-panel">
-                <div class="label">1. Intercepted Ciphertext</div>
-                <input type="text" id="cipher-in" placeholder="TYPE CODE HERE..." value="KQX JMBB LPF">
-                
-                <div class="label">2. Target Crib (Guessed Word)</div>
-                <input type="text" id="crib-in" placeholder="GUESSED TEXT..." value="WETTER">
-
-                <div class="label">3. Expected Start (Master Key)</div>
-                <input type="text" id="master-key" value="BAB" maxlength="3" style="width: 60px; text-align: center; align-self: center;">
+                <div class="label">Incoming Intercept</div>
+                <input type="text" id="cipher-in" placeholder="CIPHERTEXT..." value="KQX JMBB LPF">
+                <div class="label">English Crib (Guess)</div>
+                <input type="text" id="crib-in" placeholder="GUESSED WORD..." value="WEATHER">
             </div>
 
             <div class="sub-panel">
                 <div class="label">Logical Contradiction Trace</div>
-                <div class="phosphor-screen" id="trace">> SYSTEM STANDBY...<br>> READY FOR INPUT...</div>
+                <div class="screen" id="log">> SYSTEM READY... STANDBY</div>
             </div>
 
             <div class="sub-panel" style="text-align:center;">
                 <button id="run-btn" onclick="toggleBombe()">RUN MOTOR</button>
-                <div class="odometer" id="odo">AAA</div>
-                <div class="stop-lamp" id="stop-lamp"></div>
-                <div class="label">Stop Indicator</div>
+                <div class="odo" id="odo">AAA</div>
+                <div class="lamp" id="stop-lamp"></div>
+                <div class="label" style="margin:0">Stop Indicator</div>
             </div>
+        </div>
+    </div>
+
+    <div class="instructor-drawer">
+        <div class="label" style="color:#cc0000">Instructor Console (Hidden Answer)</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div style="font-size:12px;">Set the "True" Enigma Key:</div>
+            <input type="text" id="secret-key" value="BAB" maxlength="3" style="width:60px; margin:0; border-color: #5c1111;">
+            <div style="font-size:10px; color:#555;">(The machine will stop when the odometer hits this setting)</div>
         </div>
     </div>
 
@@ -82,74 +98,64 @@
         const rack = document.getElementById('rack');
         for (let i = 0; i < 36; i++) {
             rack.innerHTML += `
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <div class="scrambler-drum" id="d-${i}" onclick="manualRotate(${i})">A</div>
-                    <div style="font-size:9px; color:#444; margin-top:4px">${i+1}</div>
+                <div class="drum-container">
+                    <div class="drum" id="d-${i}"><div class="drum-letter">A</div></div>
+                    <div style="font-size:9px; color:#444; margin-top:5px">${i+1}</div>
                 </div>`;
         }
     }
-
-    function manualRotate(i) {
-        if(isRunning) return;
-        let drum = document.getElementById(`d-${i}`);
-        let nextIdx = (alpha.indexOf(drum.innerText) + 1) % 26;
-        drum.innerText = alpha[nextIdx];
-        if(i < 3) { p[i] = nextIdx; updateOdo(); }
-    }
-
-    function updateOdo() { document.getElementById('odo').innerText = p.map(x => alpha[x]).join(""); }
 
     function toggleBombe() {
         isRunning = !isRunning;
         const btn = document.getElementById('run-btn');
         btn.innerText = isRunning ? "STOP MOTOR" : "RUN MOTOR";
-        btn.style.background = isRunning ? "#222" : "#4a0000";
-        
-        document.querySelectorAll('.scrambler-drum').forEach((d, i) => {
-            if(isRunning) {
-                let s = (i % 3 === 0) ? "spin-slow" : (i % 3 === 1) ? "spin-mid" : "spin-fast";
-                d.classList.add(s);
-            } else {
-                d.classList.remove("spin-slow", "spin-mid", "spin-fast");
-            }
-        });
-
         if(isRunning) {
             document.getElementById('stop-lamp').classList.remove('hit');
-            document.getElementById('trace').innerHTML = "> MOTOR ENGAGED... SCANNING PERMUTATIONS<br>" + document.getElementById('trace').innerHTML;
+            document.getElementById('log').innerHTML = "> MOTOR START... SEARCHING<br>" + document.getElementById('log').innerHTML;
             scan();
         }
     }
 
     function scan() {
         if(!isRunning) return;
-        const target = document.getElementById('master-key').value.toUpperCase();
+        const target = document.getElementById('secret-key').value.toUpperCase();
         const currentPos = p.map(x => alpha[x]).join("");
-        updateOdo();
+        
+        // Update Odometer
+        document.getElementById('odo').innerText = currentPos;
+
+        // Animate the drums based on their position in the bank
+        for(let i=0; i<36; i++) {
+            let d = document.getElementById(`d-${i}`);
+            let rotation;
+            if (i % 3 === 0) rotation = p[0] * (360/26); // Slow
+            else if (i % 3 === 1) rotation = p[1] * (360/26); // Mid
+            else rotation = p[2] * (360/26); // Fast
+            
+            d.style.transform = `rotate(${rotation}deg)`;
+            d.querySelector('.drum-letter').style.transform = `rotate(-${rotation}deg)`; // Keep letter upright
+            d.querySelector('.drum-letter').innerText = alpha[p[i%3]];
+        }
 
         if(currentPos === target) {
             document.getElementById('stop-lamp').classList.add('hit');
             const crib = document.getElementById('crib-in').value;
-            document.getElementById('trace').innerHTML = `
-                <span style="color:yellow">*** VALID CIRCUIT FOUND AT ${currentPos} ***</span><br>
-                <span style="color:#fff">CRIB [${crib}] MATCHES INTERCEPT AT THIS POSITION.</span><br>
-                <span style="color:#00ff41">> DECRYPTED: WETTER VORHERSAGE</span><br>
-            ` + document.getElementById('trace').innerHTML;
-            toggleBombe();
-            alert("BOMBE STOP: Logical match found at " + currentPos);
+            document.getElementById('log').innerHTML = `
+                <span style="color:yellow">*** HIT FOUND AT POSITION ${currentPos} ***</span><br>
+                <span style="color:#fff">LOGIC CONSISTENT FOR CRIB: ${crib}</span><br>
+                <span style="color:#00ff41">> DECRYPTION: WEATHER REPORT CLEAR</span><br>
+            ` + document.getElementById('log').innerHTML;
+            isRunning = false;
+            document.getElementById('run-btn').innerText = "RUN MOTOR";
+            alert("STOP DETECTED: The settings have been found.");
         } else {
-            const log = document.getElementById('trace');
-            if(Math.random() > 0.9) { // Periodic logging to keep UI fast
-                log.innerHTML = `> TESTING ${currentPos}: CONTRADICTION FOUND<br>` + log.innerHTML;
-                if(log.innerText.length > 800) log.innerHTML = log.innerHTML.slice(0, 800);
-            }
-
+            // Mechanical Odometer Advance
             p[2]++;
             if(p[2] >= 26) { p[2] = 0; p[1]++; }
             if(p[1] >= 26) { p[1] = 0; p[0]++; }
             if(p[0] >= 26) p[0] = 0;
 
-            setTimeout(scan, 20); // High speed scan
+            setTimeout(scan, 30); 
         }
     }
 </script>
