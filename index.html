@@ -2,77 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bombe: Mechanical Logic Bank</title>
+    <title>Bletchley Park: Bombe Engineering Lab</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
         :root { --bakelite: #1a1a1a; --brass: #b08d57; --rim: #f0f0f0; }
         body { background: #080808; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
-        .chassis { background: #1a1a1a; border: 12px solid #000; padding: 25px; width: 95vw; max-width: 1000px; box-shadow: 0 50px 100px #000; border-radius: 4px; }
+        
+        .chassis { background: #1a1a1a; border: 12px solid #000; padding: 25px; width: 95vw; max-width: 1100px; box-shadow: 0 50px 100px #000; border-radius: 4px; }
         .header { text-align: center; color: var(--brass); letter-spacing: 4px; margin: 0 0 20px 0; border-bottom: 2px solid #333; padding-bottom: 5px; text-transform: uppercase; }
+
+        /* DRUM RACK */
+        .rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; background: #000; padding: 20px; margin-bottom: 25px; border: 2px solid #222; box-shadow: inset 0 0 20px #000; }
+        .drum-unit { display: flex; flex-direction: column; align-items: center; position: relative; }
         
-        /* THE ROTOR BANK GRID */
-        .rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; background: #000; padding: 20px; margin-bottom: 25px; border: 3px solid #222; box-shadow: inset 0 0 20px #000; }
-        .drum-unit { display: flex; flex-direction: column; align-items: center; }
-        
-        /* THE ROTOR DESIGN - Based on your uploaded photos */
+        /* MECHANICAL DRUM DESIGN */
         .drum {
             width: 60px; height: 60px; border-radius: 50%;
             background: radial-gradient(circle, #444 0%, #111 60%, #000 100%);
             border: 4px solid #333; position: relative;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 10px #000; transition: transform 0.05s linear;
+            box-shadow: 0 4px 10px #000; cursor: pointer;
         }
+        .drum:hover { border-color: var(--brass); }
+        
+        /* The Alphabet Rim (From your photos) */
         .drum::after {
-            content: "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z";
-            position: absolute; width: 100%; height: 100%; font-size: 7.5px; color: #fff;
-            display: flex; align-items: center; justify-content: center; text-align: center; white-space: pre-wrap;
+            content: "A . . D . . G . . J . . M . . P . . S . . V . . Y .";
+            position: absolute; width: 100%; height: 100%; font-size: 8px; color: rgba(255,255,255,0.6);
+            display: flex; align-items: center; justify-content: center; text-align: center; pointer-events: none;
         }
-        .center-hub { width: 15px; height: 15px; background: var(--brass); border-radius: 50%; z-index: 5; border: 1px solid #000; }
+        
+        .active-letter { font-size: 24px; color: #fff; font-weight: bold; z-index: 5; text-shadow: 0 0 5px #000; pointer-events: none; }
+        .center-hub { width: 14px; height: 14px; background: var(--brass); border-radius: 50%; position: absolute; z-index: 4; border: 1px solid #000; }
 
-        .panel-grid { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px; }
+        /* INTERFACE PANELS */
+        .panel-grid { display: grid; grid-template-columns: 1.2fr 1.5fr 1fr; gap: 20px; }
         .sub-panel { background: #0f0f0f; border: 1px solid #333; padding: 15px; border-radius: 4px; display: flex; flex-direction: column; }
         .label { font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
         
         input, select { background: #000; color: #00ff41; border: 1px solid #444; padding: 10px; font-family: 'Fira Code'; font-size: 13px; width: 90%; margin-bottom: 12px; }
-        .screen { background: #000b00; color: #00ff41; height: 140px; font-family: 'Fira Code'; font-size: 11px; padding: 8px; overflow-y: auto; border: 1px solid #002200; line-height: 1.4; border-radius: 4px; }
+        .screen { background: #000b00; color: #00ff41; height: 150px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #002200; line-height: 1.5; border-radius: 4px; }
         
-        button { background: #4a0000; color: white; border: 3px solid #000; padding: 18px; cursor: pointer; font-family: 'Special Elite'; font-weight: bold; font-size: 16px; margin-top: auto; }
-        button:hover { background: #700; }
+        button { background: #4a0000; color: white; border: 3px solid #000; padding: 18px; cursor: pointer; font-family: 'Special Elite'; font-weight: bold; font-size: 18px; margin-top: auto; box-shadow: 0 4px 0 #222; }
+        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #222; }
+
+        .lamp-box { text-align: center; }
+        .lamp { width: 40px; height: 40px; border-radius: 50%; background: #200; border: 3px solid #000; margin: 10px auto; transition: 0.2s; }
+        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; border-color: #ffcccc; }
+        .odo { font-size: 38px; color: var(--brass); background: #000; padding: 10px; border: 1px solid #333; text-align: center; margin-bottom: 10px; letter-spacing: 8px; border-radius: 4px; }
         
-        .lamp { width: 35px; height: 35px; border-radius: 50%; background: #200; border: 3px solid #000; margin: 10px auto; }
-        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 20px #f00; border-color: #ff9999; }
-        .odo { font-size: 32px; color: var(--brass); background: #000; padding: 10px; border: 1px solid #333; text-align: center; margin-bottom: 10px; letter-spacing: 8px; border-radius: 4px; }
+        .manual-hint { font-size: 9px; color: var(--brass); margin-top: 5px; text-transform: uppercase; }
     </style>
 </head>
 <body onload="init()">
 
     <div class="chassis">
         <h1 class="header">Bombe Diagnostic: Mechanical Logic Rack</h1>
+        
         <div class="rack" id="rack"></div>
 
         <div class="panel-grid">
             <div class="sub-panel">
-                <div class="label">1. Rotor Configuration</div>
+                <div class="label">1. Hardware Setup (Rotor Order)</div>
                 <select id="rotor-order">
-                    <option value="123">ROTOR I - II - III</option>
-                    <option value="425">ROTOR IV - II - V</option>
-                    <option value="135">ROTOR I - III - V</option>
+                    <option value="123">Drums I - II - III</option>
+                    <option value="425">Drums IV - II - V</option>
+                    <option value="135">Drums I - III - V</option>
                 </select>
-                <div class="label">2. Intercept Message</div>
+                <div class="label">2. Ciphertext Intercept</div>
                 <input type="text" id="cipher-in" value="LVBHTYAIGY">
                 <div class="label">3. Target Word (Crib)</div>
-                <input type="text" id="crib-in" value="WORLD">
+                <input type="text" id="crib-in" value="WEATHER">
             </div>
 
             <div class="sub-panel">
                 <div class="label">Logic Trace Monitor</div>
                 <div class="screen" id="log">> SYSTEM READY... STANDBY</div>
+                <div class="manual-hint">* Click drums 1-3 to set initial starting letters.</div>
             </div>
 
-            <div class="sub-panel" style="text-align:center;">
+            <div class="sub-panel">
                 <div class="odo" id="odo">AAA</div>
-                <div class="lamp" id="stop-lamp"></div>
-                <button id="run-btn" onclick="toggleBombe()">START MOTOR</button>
+                <div class="lamp-box">
+                    <div class="lamp" id="stop-lamp"></div>
+                    <div class="label">Stop Indicator</div>
+                </div>
+                <button id="run-btn" onclick="toggleBombe()">RUN MOTOR</button>
             </div>
         </div>
     </div>
@@ -81,7 +96,7 @@
     const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let isRunning = false, p = [0, 0, 0];
     
-    // INSTRUCTOR: Set these to match your Enigma settings exactly
+    // INSTRUCTOR: Set the actual Enigma solution here
     const TRUE_ROTOR_ORDER = "123"; 
     const TRUE_SETTING = "DFG"; 
 
@@ -90,53 +105,85 @@
         for (let i = 0; i < 36; i++) {
             rack.innerHTML += `
                 <div class="drum-unit">
-                    <div class="drum" id="d-${i}"><div class="center-hub"></div></div>
-                    <div style="font-size:9px; color:#444; margin-top:4px">${i+1}</div>
+                    <div class="drum" id="d-${i}" onclick="manualRotate(${i})">
+                        <div class="center-hub"></div>
+                        <div class="active-letter">A</div>
+                    </div>
+                    <div style="font-size:9px; color:#444; margin-top:5px">${i+1}</div>
                 </div>`;
+        }
+    }
+
+    function manualRotate(idx) {
+        if (isRunning) return;
+        // Only allow manual setting of the first 3 drums (The Key)
+        if (idx < 3) {
+            p[idx] = (p[idx] + 1) % 26;
+            updateDisplay();
+        }
+    }
+
+    function updateDisplay() {
+        const currentPos = p.map(x => alpha[x]).join("");
+        document.getElementById('odo').innerText = currentPos;
+        
+        for(let i=0; i<36; i++) {
+            let d = document.getElementById(`d-${i}`);
+            let rot = p[i % 3] * (360/26);
+            d.style.transform = `rotate(${rot}deg)`;
+            let letterDiv = d.querySelector('.active-letter');
+            letterDiv.innerText = alpha[p[i%3]];
+            letterDiv.style.transform = `rotate(-${rot}deg)`;
         }
     }
 
     function toggleBombe() {
         isRunning = !isRunning;
-        document.getElementById('run-btn').innerText = isRunning ? "STOP MOTOR" : "START MOTOR";
+        document.getElementById('run-btn').innerText = isRunning ? "STOP MOTOR" : "RUN MOTOR";
         if(isRunning) {
             document.getElementById('stop-lamp').classList.remove('hit');
-            document.getElementById('log').innerHTML = "> MOTOR ENGAGED... TESTING CIRCUIT<br>" + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = "> MOTOR ENGAGED... COMMENCING SEARCH<br>" + document.getElementById('log').innerHTML;
             scan();
         }
     }
 
     function scan() {
         if(!isRunning) return;
+        
         const currentPos = p.map(x => alpha[x]).join("");
         const selectedOrder = document.getElementById('rotor-order').value;
         document.getElementById('odo').innerText = currentPos;
 
-        // Visual Rotation for 36 drums
+        // Visual Rotation
         for(let i=0; i<36; i++) {
-            let rotation = p[i % 3] * (360/26);
-            document.getElementById(`d-${i}`).style.transform = `rotate(${rotation}deg)`;
+            let rot = p[i % 3] * (360/26);
+            document.getElementById(`d-${i}`).style.transform = `rotate(${rot}deg)`;
+            let letterDiv = document.getElementById(`d-${i}`).querySelector('.active-letter');
+            letterDiv.innerText = alpha[p[i%3]];
+            letterDiv.style.transform = `rotate(-${rot}deg)`;
         }
 
-        // Logic check: Only stops if BOTH Order and Position are correct
+        // Logical Match Check
         if(currentPos === TRUE_SETTING && selectedOrder === TRUE_ROTOR_ORDER) {
             document.getElementById('stop-lamp').classList.add('hit');
-            document.getElementById('log').innerHTML = `<span style="color:yellow">*** VALID HIT AT ${currentPos} ***</span><br>` + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = `<span style="color:yellow">*** VALID LOGIC DETECTED AT ${currentPos} ***</span><br>` + document.getElementById('log').innerHTML;
             isRunning = false;
-            document.getElementById('run-btn').innerText = "START MOTOR";
-            alert("BOMBE STOP: A consistent logical match has been found.");
+            document.getElementById('run-btn').innerText = "RUN MOTOR";
+            alert("BOMBE STOP: A mechanical match has been found at " + currentPos);
         } else {
+            // Mechanical Step
             p[2]++;
             if(p[2] >= 26) { p[2] = 0; p[1]++; }
             if(p[1] >= 26) { p[1] = 0; p[0]++; }
             
-            // Safety: If it does a full loop without finding the answer
+            // Full cycle check
             if(p[0] >= 26) {
                 isRunning = false;
-                document.getElementById('log').innerHTML = "<span style='color:red'>> ERROR: FULL LOOP COMPLETE. NO HIT FOUND.</span><br>" + document.getElementById('log').innerHTML;
+                document.getElementById('log').innerHTML = "<span style='color:red'>> NO MATCH FOUND IN FULL CYCLE. CHECK ROTOR ORDER.</span><br>" + document.getElementById('log').innerHTML;
+                document.getElementById('run-btn').innerText = "RUN MOTOR";
                 return;
             }
-            setTimeout(scan, 20);
+            setTimeout(scan, 15);
         }
     }
 </script>
