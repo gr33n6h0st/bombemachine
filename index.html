@@ -2,61 +2,238 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bletchley Park: Bombe Terminal</title>
+    <title>Bombe Model G: Logic Unit</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
-        :root { --bakelite: #1a1a1a; --brass: #b08d57; }
-        body { background: #080808; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
-        .chassis { background: #1a1a1a; border: 10px solid #000; padding: 25px; width: 95vw; max-width: 1100px; box-shadow: 0 50px 100px #000; }
-        .header { text-align: center; color: var(--brass); letter-spacing: 4px; border-bottom: 2px solid #333; padding-bottom: 10px; text-transform: uppercase; margin: 0 0 20px 0; }
-
-        .rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; background: #000; padding: 20px; margin-bottom: 25px; border: 2px solid #222; }
-        .drum {
-            width: 60px; height: 60px; border-radius: 50%;
-            background: radial-gradient(circle, #444 0%, #111 60%, #000 100%);
-            border: 4px solid #333; position: relative;
-            display: flex; align-items: center; justify-content: center;
+        
+        :root {
+            --bakelite: #121212;
+            --brass: #d4af37;
+            --iron: #2a2a2a;
+            --glow: #00ff41;
         }
-        .active-letter { font-size: 24px; color: #fff; font-weight: bold; z-index: 5; pointer-events: none; }
-        .center-hub { width: 14px; height: 14px; background: var(--brass); border-radius: 50%; position: absolute; z-index: 4; border: 1px solid #000; }
 
-        .panel-grid { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px; }
-        .sub-panel { background: #0f0f0f; border: 1px solid #333; padding: 15px; border-radius: 4px; }
-        .label { font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
-        input { background: #000; color: #00ff41; border: 1px solid #444; padding: 10px; font-family: 'Fira Code'; font-size: 13px; width: 90%; margin-bottom: 12px; }
-        .screen { background: #000b00; color: #00ff41; height: 140px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #002200; border-radius: 4px; }
-        button { background: #4a0000; color: white; border: 3px solid #000; padding: 18px; cursor: pointer; font-family: 'Special Elite'; width: 100%; font-size: 18px; }
-        .odo { font-size: 38px; color: var(--brass); background: #000; text-align: center; letter-spacing: 8px; border: 1px solid #333; margin-bottom: 10px; }
-        .lamp { width: 40px; height: 40px; border-radius: 50%; background: #200; border: 3px solid #000; margin: 10px auto; }
-        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; }
-        .fixed-badge { color: #555; font-size: 9px; margin-top: -10px; margin-bottom: 15px; display: block; }
+        body {
+            background: #050505;
+            color: #ccc;
+            font-family: 'Special Elite', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .chassis {
+            background: var(--bakelite);
+            border: 12px solid #000;
+            border-top: 12px solid #1a1a1a;
+            border-left: 12px solid #1a1a1a;
+            padding: 30px;
+            width: 95vw;
+            max-width: 1100px;
+            box-shadow: 0 60px 120px rgba(0,0,0,0.9);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            color: var(--brass);
+            letter-spacing: 6px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            text-transform: uppercase;
+            margin: 0 0 30px 0;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        /* MECHANICAL RACK */
+        .rack {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 12px;
+            background: #080808;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 4px inset #000;
+            border-radius: 4px;
+        }
+
+        .drum {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #444 0%, #111 70%, #000 100%);
+            border: 3px solid #333;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.5), inset -2px -2px 5px rgba(255,255,255,0.05);
+            transition: transform 0.1s linear;
+        }
+
+        .drum:hover { border-color: var(--brass); }
+        
+        /* The letter ring from your first screenshot */
+        .drum::before {
+            content: "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z";
+            position: absolute; width: 100%; height: 100%; font-size: 6px; 
+            color: rgba(212, 175, 55, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; word-spacing: 2px;
+        }
+
+        .active-letter {
+            font-size: 26px;
+            color: #fff;
+            font-weight: bold;
+            z-index: 5;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .center-hub {
+            width: 14px;
+            height: 14px;
+            background: var(--brass);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 4;
+            border: 1px solid #000;
+            box-shadow: inset 1px 1px 2px rgba(255,255,255,0.8);
+        }
+
+        /* CONTROL PANELS */
+        .panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr;
+            gap: 25px;
+        }
+
+        .sub-panel {
+            background: #0a0a0a;
+            border: 2px solid #222;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: inset 0 0 20px #000;
+        }
+
+        .label {
+            font-size: 11px;
+            color: var(--brass);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        input {
+            background: #000;
+            color: var(--glow);
+            border: 1px solid #333;
+            padding: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .screen {
+            background: #020802;
+            color: var(--glow);
+            height: 160px;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            padding: 15px;
+            overflow-y: auto;
+            border: 2px solid #111;
+            border-radius: 4px;
+            line-height: 1.5;
+        }
+
+        /* ODOMETER & START */
+        .odo {
+            font-size: 45px;
+            color: var(--brass);
+            background: #000;
+            padding: 10px;
+            text-align: center;
+            letter-spacing: 12px;
+            border: 3px double #333;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .lamp {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #400, #100);
+            border: 4px solid #000;
+            margin: 15px auto;
+            box-shadow: inset 2px 2px 5px rgba(255,255,255,0.1);
+        }
+
+        .lamp.hit {
+            background: radial-gradient(circle, #f00, #600);
+            box-shadow: 0 0 40px #f00, inset 2px 2px 10px rgba(255,255,255,0.5);
+            border-color: #ffaaaa;
+        }
+
+        button {
+            background: linear-gradient(#600, #300);
+            color: white;
+            border: 2px solid #000;
+            padding: 20px;
+            cursor: pointer;
+            font-family: 'Special Elite';
+            width: 100%;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 0 #000;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #000;
+        }
     </style>
 </head>
 <body onload="init()">
 
     <div class="chassis">
-        <h1 class="header">Bombe Model G: Logic Unit</h1>
-        <span class="fixed-badge" style="text-align:center;">HARDWARE CONFIGURATION LOCKED: ROTORS I - II - III (UKW-B)</span>
+        <h1 class="header">Bombe Model G: Universal Logic Engine</h1>
         
         <div class="rack" id="rack"></div>
 
         <div class="panel-grid">
             <div class="sub-panel">
                 <div class="label">Intercepted Ciphertext</div>
-                <input type="text" id="cipher-in" placeholder="PASTE FROM ENIGMA...">
-                <div class="label">Believed Crib (Target Word)</div>
-                <input type="text" id="crib-in" placeholder="e.g., WEATHER">
+                <input type="text" id="cipher-in" placeholder="LVBHTYAIGY">
+                
+                <div class="label">Believed Crib (Target)</div>
+                <input type="text" id="crib-in" placeholder="WORLD">
+                
+                <div style="font-size:9px; color:#555; margin-top:20px;">
+                    * ENIGMA PROTOCOL: I - II - III<br>
+                    * PLUGBOARD: BYPASSED
+                </div>
             </div>
 
             <div class="sub-panel">
-                <div class="label">Logic Monitor</div>
-                <div class="screen" id="log">> SYSTEM IDLE... AWAITING DATA.</div>
+                <div class="label">Logic Trace Monitor</div>
+                <div class="screen" id="log">> SYSTEM READY... STANDBY</div>
             </div>
 
             <div class="sub-panel" style="text-align:center;">
                 <div class="odo" id="odo">AAA</div>
                 <div class="lamp" id="stop-lamp"></div>
-                <button id="run-btn" onclick="toggleBombe()">START MOTOR</button>
+                <button id="run-btn" onclick="toggleBombe()">Run Motor</button>
             </div>
         </div>
     </div>
@@ -65,15 +242,29 @@
     const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let isRunning = false, p = [0, 0, 0];
     
-    // LOCKED TO ROTORS I, II, III (Standard for most Enigma sites)
+    // STANDARD ROTORS
     const rotors = ["EKMFLGDQVZNTOWYHXUSPAIBRCJ", "AJDKSIRUXBLHWTMCQGZNPYFVOE", "BDFHJLCPRTXVZNYEIWGAKMUSQO"];
     const reflector = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
 
     function init() {
         const rack = document.getElementById('rack');
+        rack.innerHTML = '';
         for (let i = 0; i < 36; i++) {
-            rack.innerHTML += `<div class="drum-unit"><div class="drum" id="d-${i}"><div class="center-hub"></div><div class="active-letter">A</div></div></div>`;
+            rack.innerHTML += `
+                <div class="drum-unit">
+                    <div class="drum" id="d-${i}" onclick="manualRotate(${i % 3})">
+                        <div class="center-hub"></div>
+                        <div class="active-letter">A</div>
+                    </div>
+                </div>`;
         }
+        updateVisuals();
+    }
+
+    function manualRotate(idx) {
+        if (isRunning) return;
+        p[idx] = (p[idx] + 1) % 26;
+        updateVisuals();
     }
 
     function enigmaMap(char, pos) {
@@ -93,10 +284,10 @@
 
     function toggleBombe() {
         isRunning = !isRunning;
-        document.getElementById('run-btn').innerText = isRunning ? "STOP MOTOR" : "START MOTOR";
+        document.getElementById('run-btn').innerText = isRunning ? "Stop Motor" : "Run Motor";
         if(isRunning) {
             document.getElementById('stop-lamp').classList.remove('hit');
-            document.getElementById('log').innerHTML = "> SCANNING LOGICAL POSSIBILITIES...<br>" + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = "> MOTOR START... SEARCHING<br>" + document.getElementById('log').innerHTML;
             scan();
         }
     }
@@ -106,13 +297,10 @@
         const cipher = document.getElementById('cipher-in').value.toUpperCase().replace(/[^A-Z]/g, "");
         const crib = document.getElementById('crib-in').value.toUpperCase().replace(/[^A-Z]/g, "");
         
-        if(!cipher || !crib) { 
-            document.getElementById('log').innerHTML = "<span style='color:red'>> ERROR: MISSING DATA.</span><br>";
-            isRunning = false; return; 
-        }
+        if(!cipher || !crib) { isRunning = false; return; }
 
         let found = false;
-        // SMART SEARCH: Test first 15 possible offsets for the crib
+        // Check first 15 offsets
         for (let offset = 0; offset < Math.min(cipher.length - crib.length + 1, 15); offset++) {
             let match = true;
             for(let i = 0; i < crib.length; i++) {
@@ -127,18 +315,18 @@
 
         if(found) {
             document.getElementById('stop-lamp').classList.add('hit');
-            document.getElementById('log').innerHTML = `<span style="color:yellow">*** VALID HIT AT ${p.map(x=>alpha[x]).join("")} ***</span><br>` + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = `<span style="color:yellow">*** HIT FOUND AT POSITION ${p.map(x=>alpha[x]).join("")} ***</span><br>> LOGIC CONSISTENT FOR CRIB: ${crib}<br>` + document.getElementById('log').innerHTML;
             isRunning = false;
-            document.getElementById('run-btn').innerText = "START MOTOR";
+            document.getElementById('run-btn').innerText = "Run Motor";
         } else {
             p[2]++;
             if(p[2] >= 26) { p[2] = 0; p[1]++; }
             if(p[1] >= 26) { p[1] = 0; p[0]++; }
-            
             if(p[0] >= 26) { 
                 isRunning = false; 
-                document.getElementById('log').innerHTML = "<span style='color:red'>> SEARCH COMPLETE: NO LOGICAL MATCHES FOUND.</span><br>";
+                document.getElementById('log').innerHTML = "<span style='color:red'>> NO LOGICAL MATCH FOUND.</span><br>";
                 p = [0,0,0];
+                updateVisuals();
                 return; 
             }
             updateVisuals();
@@ -148,10 +336,14 @@
 
     function updateVisuals() {
         document.getElementById('odo').innerText = p.map(x => alpha[x]).join("");
-        for(let i=0; i<12; i++) {
-            let rot = p[i % 3] * (360/26);
+        for(let i=0; i<36; i++) {
+            let rotorIdx = i % 3;
+            let rot = p[rotorIdx] * (360/26);
             let d = document.getElementById(`d-${i}`);
-            if(d) d.style.transform = `rotate(${rot}deg)`;
+            d.style.transform = `rotate(${rot}deg)`;
+            let letterDiv = d.querySelector('.active-letter');
+            letterDiv.innerText = alpha[p[rotorIdx]];
+            letterDiv.style.transform = `rotate(-${rot}deg)`;
         }
     }
 </script>
