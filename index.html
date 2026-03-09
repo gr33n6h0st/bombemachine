@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bombe Model G: Research Terminal</title>
+    <title>Bombe Model G: Universal Logic Engine</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
         :root { --bakelite: #1a1a1a; --brass: #b08d57; }
-        body { background: #080808; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; overflow-x: hidden; }
-        .chassis { background: #1a1a1a; border: 10px solid #000; padding: 25px; width: 95vw; max-width: 1100px; box-shadow: 0 50px 100px #000; z-index: 2; }
+        body { background: #080808; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
+        .chassis { background: #1a1a1a; border: 10px solid #000; padding: 25px; width: 95vw; max-width: 1100px; box-shadow: 0 50px 100px #000; border-radius: 4px; }
         .header { text-align: center; color: var(--brass); letter-spacing: 4px; border-bottom: 2px solid #333; padding-bottom: 10px; text-transform: uppercase; margin-top: 0; }
 
         /* THE DRUMS */
@@ -17,7 +17,7 @@
             background: radial-gradient(circle, #444 0%, #111 60%, #000 100%);
             border: 4px solid #333; position: relative;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: transform 0.1s linear;
+            transition: transform 0.1s linear;
         }
         .drum::after {
             content: "A . C . E . G . I . K . M . O . Q . S . U . W . Y .";
@@ -37,56 +37,32 @@
         .odo { font-size: 38px; color: var(--brass); background: #000; text-align: center; letter-spacing: 8px; border: 1px solid #333; margin-bottom: 10px; }
         .lamp { width: 40px; height: 40px; border-radius: 50%; background: #200; border: 3px solid #000; margin: 10px auto; }
         .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; border-color: #ffcccc; }
-
-        /* SECRET INSTRUCTOR OVERLAY */
-        #instructor-panel {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 9999; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-        .instr-box { background: #111; border: 2px dashed #800; padding: 40px; text-align: center; }
     </style>
 </head>
 <body onload="init()">
 
-    <div id="instructor-panel">
-        <div class="instr-box">
-            <h2 style="color:#800;">INSTRUCTOR MASTER KEYSET</h2>
-            <div class="label">Set Target Rotor Setting (e.g. AJQ)</div>
-            <input type="text" id="target-key" value="AJQ" maxlength="3" style="font-size: 30px; text-align: center; width: 150px;">
-            <div class="label">Set Target Rotor Order</div>
-            <select id="target-order" style="width: 200px;">
-                <option value="123">I - II - III</option>
-                <option value="425">IV - II - V</option>
-                <option value="135">I - III - V</option>
-            </select>
-            <p style="color: #555; font-size: 12px;">Press '`' (backtick) to hide this panel.</p>
-            <button onclick="hideInstructor()" style="background:#222; font-size: 14px; padding: 10px;">SAVE & EXIT</button>
-        </div>
-    </div>
-
     <div class="chassis">
-        <h1 class="header">Bombe Model G: Mechanical Logic</h1>
+        <h1 class="header">Bombe Model G: Universal Logic Engine</h1>
         <div class="rack" id="rack"></div>
 
         <div class="panel-grid">
             <div class="sub-panel">
-                <div class="label">Hardware Setup (Rotors)</div>
-                <select id="user-order">
-                    <option value="123">I - II - III</option>
-                    <option value="425">IV - II - V</option>
-                    <option value="135">I - III - V</option>
+                <div class="label">Hardware Setup (Rotor Order)</div>
+                <select id="rotor-select">
+                    <option value="0,1,2">I - II - III</option>
+                    <option value="1,0,2">II - I - III</option>
+                    <option value="2,1,0">III - II - I</option>
                 </select>
-                <div class="label">Intercepted Cipher</div>
-                <input type="text" placeholder="PASTE ENIGMA CODE...">
-                <div class="label">Crib Guess</div>
-                <input type="text" placeholder="WEATHER">
+                <div class="label">Ciphertext (From Enigma)</div>
+                <input type="text" id="cipher-in" placeholder="PASTE HERE...">
+                <div class="label">Your Crib (The Guess)</div>
+                <input type="text" id="crib-in" placeholder="WORD">
             </div>
 
             <div class="sub-panel">
-                <div class="label">Logic Monitor</div>
-                <div class="screen" id="log">> AWAITING SIGNAL...</div>
-                <div style="font-size:9px; color:var(--brass); margin-top:10px;">* CLICK DRUMS 1-3 TO MANUALLY SET START POSITION</div>
+                <div class="label">Logic Trace Monitor</div>
+                <div class="screen" id="log">> STANDBY... ENGINE IDLE</div>
+                <div style="font-size:9px; color:var(--brass); margin-top:10px;">* ROTORS USE STANDARD WEHRMACHT WIRING</div>
             </div>
 
             <div class="sub-panel" style="text-align:center;">
@@ -101,38 +77,39 @@
     const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let isRunning = false, p = [0, 0, 0];
     
-    // SECRET PANEL TOGGLE
-    window.addEventListener('keydown', (e) => {
-        if (e.key === '`' || e.key === 'End') {
-            const panel = document.getElementById('instructor-panel');
-            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
-        }
-    });
-
-    function hideInstructor() { document.getElementById('instructor-panel').style.display = 'none'; }
+    // STANDARD WEHRMACHT ROTOR WIRING
+    const rotors = [
+        "EKMFLGDQVZNTOWYHXUSPAIBRCJ", // I
+        "AJDKSIRUXBLHWTMCQGZNPYFVOE", // II
+        "BDFHJLCPRTXVZNYEIWGAKMUSQO", // III
+        "ESOVPZJAYQUIRHXLNFTGKDCMWB", // IV
+        "VZBRGITYUPSDNHLXAWMJQOFECK"  // V
+    ];
+    const reflector = "YRUHQSLDPXNGOKMIEBFZCWVJAT"; // UKW-B
 
     function init() {
         const rack = document.getElementById('rack');
         for (let i = 0; i < 36; i++) {
-            rack.innerHTML += `<div class="drum-unit"><div class="drum" id="d-${i}" onclick="manualRotate(${i})"><div class="center-hub"></div><div class="active-letter">A</div></div></div>`;
+            rack.innerHTML += `<div class="drum-unit"><div class="drum" id="d-${i}"><div class="center-hub"></div><div class="active-letter">A</div></div></div>`;
         }
     }
 
-    function manualRotate(idx) {
-        if (isRunning || idx > 2) return;
-        p[idx] = (p[idx] + 1) % 26;
-        updateVisuals();
-    }
-
-    function updateVisuals() {
-        document.getElementById('odo').innerText = p.map(x => alpha[x]).join("");
-        for(let i=0; i<36; i++) {
-            let rot = p[i % 3] * (360/26);
-            let d = document.getElementById(`d-${i}`);
-            d.style.transform = `rotate(${rot}deg)`;
-            d.querySelector('.active-letter').innerText = alpha[p[i%3]];
-            d.querySelector('.active-letter').style.transform = `rotate(-${rot}deg)`;
+    function enigmaMap(char, pos, rSet) {
+        let c = alpha.indexOf(char);
+        // Through rotors (forward)
+        for(let i=2; i>=0; i--) {
+            let shift = pos[i];
+            c = (alpha.indexOf(rotors[rSet[i]][(c + shift + 26) % 26]) - shift + 26) % 26;
         }
+        // Reflector
+        c = alpha.indexOf(reflector[c]);
+        // Through rotors (reverse)
+        for(let i=0; i<3; i++) {
+            let shift = pos[i];
+            let target = alpha[(c + shift + 26) % 26];
+            c = (rotors[rSet[i]].indexOf(target) - shift + 26) % 26;
+        }
+        return alpha[c];
     }
 
     function toggleBombe() {
@@ -140,41 +117,59 @@
         document.getElementById('run-btn').innerText = isRunning ? "STOP MOTOR" : "RUN MOTOR";
         if(isRunning) {
             document.getElementById('stop-lamp').classList.remove('hit');
-            document.getElementById('log').innerHTML = "> MOTOR ENGAGED... SEARCHING LOGIC<br>" + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = "> CALCULATING LOGICAL CONSISTENCY...<br>" + document.getElementById('log').innerHTML;
             scan();
         }
     }
 
     function scan() {
         if(!isRunning) return;
-        const current = p.map(x => alpha[x]).join("");
-        const order = document.getElementById('user-order').value;
+        const cipher = document.getElementById('cipher-in').value.toUpperCase().replace(/[^A-Z]/g, "");
+        const crib = document.getElementById('crib-in').value.toUpperCase().replace(/[^A-Z]/g, "");
+        const rSet = document.getElementById('rotor-select').value.split(',').map(Number);
         
-        // READ THE SECRET TARGET
-        const TRUE_KEY = document.getElementById('target-key').value.toUpperCase();
-        const TRUE_ORDER = document.getElementById('target-order').value;
+        if(!cipher || !crib) { alert("Enter Cipher and Crib!"); isRunning = false; return; }
 
-        document.getElementById('odo').innerText = current;
+        let match = true;
+        let testPos = [...p];
 
-        if(current === TRUE_KEY && order === TRUE_ORDER) {
+        // CHECK THE LOGIC
+        // This simulates the Enigma stepping for each letter of the crib
+        for(let i=0; i < crib.length; i++) {
+            // Simple stepping logic (no double-stepping for lab simplicity)
+            let stepPos = [...testPos];
+            stepPos[2] = (stepPos[2] + i) % 26; 
+
+            if(enigmaMap(crib[i], stepPos, rSet) !== cipher[i]) {
+                match = false;
+                break;
+            }
+        }
+
+        if(match) {
             document.getElementById('stop-lamp').classList.add('hit');
-            document.getElementById('log').innerHTML = `<span style="color:yellow">*** LOGICAL HIT AT ${current} ***</span><br>` + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = `<span style="color:yellow">*** HIT AT ${p.map(x=>alpha[x]).join("")} ***</span><br>` + document.getElementById('log').innerHTML;
             isRunning = false;
-            document.getElementById('run-btn').innerText = "RUN MOTOR";
-            alert("BOMBE STOP: Settings confirmed at " + current);
         } else {
             p[2]++;
             if(p[2] >= 26) { p[2] = 0; p[1]++; }
             if(p[1] >= 26) { p[1] = 0; p[0]++; }
-            if(p[0] >= 26) { 
-                isRunning = false; 
-                document.getElementById('log').innerHTML = "<span style='color:red'>> ERROR: FULL CYCLE. NO MATCH FOUND.</span><br>";
-                p = [0,0,0];
-                updateVisuals();
-                return; 
-            }
+            
+            if(p[0] >= 26) { isRunning = false; alert("Search Complete. No Logic Matches."); return; }
+            
             updateVisuals();
-            setTimeout(scan, 10);
+            setTimeout(scan, 1); // Fast scan
+        }
+    }
+
+    function updateVisuals() {
+        document.getElementById('odo').innerText = p.map(x => alpha[x]).join("");
+        for(let i=0; i<12; i++) { // Update first row for performance
+            let rot = p[i % 3] * (360/26);
+            let d = document.getElementById(`d-${i}`);
+            d.style.transform = `rotate(${rot}deg)`;
+            d.querySelector('.active-letter').innerText = alpha[p[i%3]];
+            d.querySelector('.active-letter').style.transform = `rotate(-${rot}deg)`;
         }
     }
 </script>
