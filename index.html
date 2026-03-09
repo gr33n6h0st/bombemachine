@@ -2,92 +2,365 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bombe Re-Construction: Model G</title>
+    <title>Welchman-Turing Bombe: Museum Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
-        body { background: #1a1a1a; color: #ccc; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .bombe-frame { background: #222; border: 12px solid #111; padding: 30px; width: 920px; box-shadow: 0 50px 100px #000; border-radius: 8px; }
-        .drum-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; margin-bottom: 30px; padding: 20px; background: #111; border-radius: 4px; }
-        .drum { 
-            width: 60px; height: 60px; border-radius: 50%; 
-            background: radial-gradient(circle, #3d2b1f 0%, #1a0f0a 100%); 
-            border: 4px solid #4a3b2b; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; color: #f5deb3; font-size: 18px; text-shadow: 0 0 5px #000;
-            box-shadow: inset 0 0 10px #000, 0 5px 10px #000;
+
+        /* --- Palette & Skeleton --- */
+        :root {
+            --chassis: #0a0a0a; /* Dark void background */
+            --rack-panel: #1a1a1a; /* Bakelite/Steel dark frame */
+            --drum-body: #3c2918; /* Bakelite core color */
+            --drum-metal: #7a7a7a; /* Worn aluminum center */
+            --gold-leaf: #b08d57; /* Aged brass/gold lettering */
+            --green-phosphor: #00ff41;
         }
-        .spinning { animation: drumSpin 0.2s linear infinite; }
-        @keyframes drumSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .control-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .panel-box { background: #111; border: 2px solid #333; padding: 20px; border-radius: 4px; }
-        .screen { background: #001a00; color: #00ff41; height: 150px; font-family: 'Fira Code'; font-size: 12px; padding: 10px; overflow-y: auto; border: 1px solid #003300; }
-        input { background: #000; color: #f5deb3; border: 1px solid #4a3b2b; width: 95%; padding: 10px; font-family: 'Special Elite'; font-size: 18px; margin-top: 10px; text-transform: uppercase; }
-        button { background: #5c1a1a; color: #fff; width: 100%; padding: 20px; border: 4px solid #000; cursor: pointer; font-family: 'Special Elite'; font-size: 18px; font-weight: bold; margin-top: 10px; transition: 0.2s; }
-        button:hover { background: #8b0000; }
-        .lamp { width: 30px; height: 30px; border-radius: 50%; background: #300; border: 3px solid #000; margin: 15px auto; transition: 0.3s; }
-        .lamp.hit { background: #f00; box-shadow: 0 0 30px #f00; border-color: #ff9999; }
+
+        body {
+            background-color: var(--chassis);
+            color: #ddd;
+            font-family: 'Special Elite', serif; /* Odometer/Typewriter style */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- THE CHASSIS --- */
+        .bombe-enclosure {
+            background: linear-gradient(145deg, #2a2a2a, #050505);
+            border: 10px solid #000;
+            border-radius: 4px;
+            padding: 30px;
+            width: 900px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.9), inset 0 0 15px rgba(255,255,255,0.02);
+            position: relative;
+        }
+
+        .museum-label {
+            text-align: center; color: var(--gold-leaf);
+            margin: 0 0 25px 0; font-size: 26px; letter-spacing: 5px;
+            text-transform: uppercase; border-bottom: 2px solid #222;
+        }
+
+        /* --- THE DRUM RACK (Compact 12x3 Grid) --- */
+        .drum-rack {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 12px;
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border: 2px solid #222;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .drum-slot {
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+            width: 58px; height: 95px; /* Vertical aspect */
+            background: radial-gradient(circle at 10% 10%, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 80%);
+            border-left: 2px solid #000; border-right: 2px solid #000;
+        }
+
+        /* --- THE SKEUOMORPHIC DRUM (Bakelite & Metal) --- */
+        .scrambler-drum {
+            width: 54px; height: 54px; border-radius: 50%;
+            /* Worn Bakelite Body (Image 3 Inspiration) */
+            background: radial-gradient(circle, var(--drum-metal) 0%, var(--drum-body) 30%, #000 100%);
+            border: 4px solid var(--bakelite-rim, #4a3b2b); /* Bakelite frame (Image 3 Green/Brown) */
+            position: relative;
+            box-shadow: inset 0 0 10px #000, 0 5px 15px rgba(0,0,0,0.7);
+            user-select: none;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Alphabet Ring (Odometer style) */
+        .scrambler-drum::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            /* Mimicking the notched, white-lettered ring from Image 3 */
+            box-shadow: inset 0 0 5px #000, inset 0 0 2px rgba(255,255,255,0.1);
+        }
+
+        .rotor-letter {
+            font-size: 34px; font-weight: bold; color: #fff; text-shadow: 0 1px 3px #000, 0 0 5px #fff;
+            position: absolute; z-index: 2;
+        }
+
+        /* Click/Step Animation */
+        .step-down { animation: ratchetMove 0.1s steps(26); }
+        @keyframes ratchetMove { 0% { transform: scale(0.95); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* Color variations from Image 3 */
+        #rack div:nth-child(3n+1) .scrambler-drum { --bakelite-rim: #3e2723; } /* Fast (Brown/Type 1) */
+        #rack div:nth-child(3n+2) .scrambler-drum { --bakelite-rim: #4e342e; } /* Mid (Reddish/Type 2) */
+        #rack div:nth-child(3n+3) .scrambler-drum { --bakelite-rim: #2d1b0d; } /* Slow (Dark/Type 3) */
+
+        .drum-label { font-size: 10px; color: #777; font-weight: bold; margin-bottom: 5px; }
+
+        /* --- THE SUB-PANELS (Bakelite Enclosures) --- */
+        .panel-deck { display: grid; grid-template-columns: 1fr 2fr 1.2fr; gap: 20px; }
+
+        .sub-panel {
+            background-color: #111;
+            border: 3px solid #000;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: inset 0 0 10px #000;
+            position: relative;
+        }
+
+        /* Dial Inputs (Aged Metal Rings) */
+        .dial-input {
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 2px;
+            padding: 5px;
+            font-family: 'Special Elite';
+            font-size: 14px;
+            color: var(--gold-leaf);
+            width: 100%;
+            box-shadow: inset 0 2px 5px #000;
+            text-align: center;
+        }
+
+        .phosphor-screen {
+            background-color: #001a00;
+            color: var(--green-phosphor);
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            padding: 10px;
+            border: 1px solid #003300;
+            height: 180px;
+            overflow-y: auto;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        /* Monitor overlay effect */
+        .phosphor-screen::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+        }
+
+        .stop-lamp {
+            width: 25px; height: 25px; border-radius: 50%;
+            background-color: #300; border: 3px solid #000;
+            box-shadow: 0 4px 8px #000, inset 0 0 5px #000;
+            margin: 15px auto; transition: background-color 0.1s ease;
+        }
+
+        .stop-lamp.hit {
+            background-color: #f00; background: radial-gradient(circle, #f00 0%, #400 100%);
+            box-shadow: 0 0 25px rgba(255,0,0,0.5), inset 0 0 5px #f00;
+            border-color: #ffcccc;
+        }
+
+        /* --- CONTROLS (Authentic Metal Buttons) --- */
+        .controls { display: flex; flex-direction: column; gap: 10px; }
+
+        button {
+            background-color: #2a2a2a; color: #fff;
+            border: 2px solid #000;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-family: 'Special Elite', serif;
+            font-size: 13px; font-weight: bold;
+            letter-spacing: 1px;
+            transition: 0.1s ease;
+            box-shadow: 0 4px 0 #111;
+        }
+
+        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #111; }
+
+        .btn-run { background-color: #4a0000; }
+        .btn-reset { background-color: #1a1a1a; color: #888; border-color: #111; }
+        .btn-run:hover { background-color: #600; }
+
+        /* Odometer position readout */
+        .position-odometer {
+            background-color: #000;
+            color: var(--gold-leaf);
+            font-size: 30px; font-weight: bold;
+            padding: 5px 15px;
+            margin-top: 15px;
+            display: inline-block;
+            box-shadow: inset 0 2px 5px #000;
+            border: 1px solid #222;
+        }
+
+        .sub-label { font-size: 10px; color: #555; text-transform: uppercase; margin-bottom: 5px; }
+
     </style>
 </head>
 <body onload="init()">
-    <div class="bombe-frame">
-        <h1 style="text-align:center; color:#f5deb3; margin-top:0; letter-spacing: 5px;">BOMBE RE-CONSTRUCTION - MODEL G</h1>
-        <div class="drum-grid" id="rack"></div>
-        <div class="control-panel">
-            <div class="panel-box">
-                <div style="font-size:12px; color:#888">TARGET CRIB (PLAIN TEXT GUESS)</div>
-                <input type="text" id="crib-input" value="WETTER" placeholder="ENTER CRIB...">
-                <div style="font-size:12px; color:#888; margin-top:15px">EXPECTED STARTING POS</div>
-                <input type="text" id="target-pos" value="BAB" maxlength="3" style="width:60px; text-align:center;">
-                <div class="lamp" id="stop-lamp"></div>
-                <div style="text-align:center; font-size:10px; color:#666">STOP INDICATOR</div>
+
+    <div class="bombe-enclosure">
+        <h1 class="museum-label">Welchman-Turing Bombe - Model G</h1>
+
+        <div class="drum-rack" id="rack"></div>
+
+        <div class="panel-deck">
+            <div class="sub-panel">
+                <div class="sub-label">Target Menu (Crib Input)</div>
+                <input type="text" id="crib-input" class="dial-input" placeholder="WETTER" value="WETTERVORHERSAGE">
+                <div class="sub-label" style="margin-top:15px">Current Rotor Chain</div>
+                <div style="font-size: 20px; color: var(--gold-leaf); margin-top: 5px;">IV - II - V</div>
+                <div class="stop-lamp" id="stop-lamp"></div>
+                <div style="text-align: center; font-size: 10px;">STOP INDICATOR</div>
             </div>
-            <div class="panel-box">
-                <div class="screen" id="log">> SYSTEM READY...</div>
-                <button id="run-btn" onclick="toggleBombe()">RUN MOTOR</button>
-                <div style="margin-top:15px; text-align:center; font-size:14px;">
-                    CURRENT TEST: <span id="pos-display" style="color:#f5deb3; font-size:20px;">AAA</span>
+
+            <div class="sub-panel">
+                <div class="sub-label">Logical Contradiction Trace</div>
+                <div class="phosphor-screen" id="trace-monitor">
+                    > SYSTEM READY... [AAA]<br>
+                    > LOAD CRIB (WETTERVORHERSAGE)...<br>
+                    > VOLTAGE STABLE. STANDBY.
+                </div>
+            </div>
+
+            <div class="sub-panelControls controls" style="text-align:center;">
+                <button class="btn-run" id="run-btn" onclick="toggleSearch()">RUN MOTOR</button>
+                <button class="btn-reset" onclick="fullReset()">RESET RACK (AAA)</button>
+                
+                <div style="margin-top:15px; text-align:center;">
+                    <div class="sub-label">Current Search Position</div>
+                    <div class="position-odometer" id="pos-display">AAA</div>
                 </div>
             </div>
         </div>
     </div>
-<script>
-    const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    let isRunning = false, p = [0,0,0];
-    function init() {
-        const r = document.getElementById('rack');
-        for(let i=0; i<36; i++) r.innerHTML += `<div class="drum" id="d-${i}">A</div>`;
-    }
-    function toggleBombe() {
-        if(isRunning) { 
-            isRunning = false; 
-            document.getElementById('run-btn').innerText = "RUN MOTOR";
-            document.querySelectorAll('.drum').forEach(d => d.classList.remove('spinning'));
-            return; 
-        }
-        isRunning = true;
-        document.getElementById('run-btn').innerText = "STOPPING...";
-        document.querySelectorAll('.drum').forEach(d => d.classList.add('spinning'));
-        document.getElementById('stop-lamp').classList.remove('hit');
-        scan();
-    }
-    function scan() {
-        if(!isRunning) return;
-        const target = document.getElementById('target-pos').value.toUpperCase();
-        const pos = alpha[p[0]] + alpha[p[1]] + alpha[p[2]];
-        document.getElementById('pos-display').innerText = pos;
-        document.querySelectorAll('.drum').forEach(d => d.innerText = alpha[p[2]]); // Visual sync
 
-        if(pos === target) {
-            document.getElementById('log').innerHTML = `[!] MATCH DETECTED AT ${pos}\n[!] CRIB VALIDATED\n` + document.getElementById('log').innerHTML;
-            document.getElementById('stop-lamp').classList.add('hit');
-            isRunning = false;
-            document.getElementById('run-btn').innerText = "RUN MOTOR";
-            document.querySelectorAll('.drum').forEach(d => d.classList.remove('spinning'));
-            alert("STOP FOUND: " + pos);
+<script>
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const scramblers = Array.from({ length: 36 }, () => 0); // Internal state for 36 drums
+    let currentSearchPos = [0, 0, 0]; // A A A
+    let searchActive = false;
+    let traceInterval;
+
+    // A Known "Hit" Target (Set for the lab)
+    // The Enigma msg was encoded starting at "ZZZ". 
+    // The Bombe is programmed to find that logical "Stop".
+    const targetKey = [25, 25, 25]; // Z Z Z
+
+    function init() {
+        const rack = document.getElementById('rack');
+        // Build 36 individual scrambler slots (Compact 12x3 grid)
+        for (let i = 0; i < 36; i++) {
+            rack.innerHTML += `
+                <div class="drum-slot">
+                    <div class="scrambler-drum" id="drum-${i}" onclick="stepDrum(${i})">
+                        <div class="rotor-letter">${alphabet[scramblers[i]]}</div>
+                    </div>
+                    <div class="drum-label">${i + 1}</div>
+                </div>
+            `;
+        }
+        updateOdometer();
+    }
+
+    // Toggle the high-speed search
+    function toggleSearch() {
+        searchActive = !searchActive;
+        const btn = document.getElementById('run-btn');
+        btn.innerText = searchActive ? "STOP MOTOR" : "RUN MOTOR";
+        btn.style.backgroundColor = searchActive ? "#222" : "#4a0000";
+
+        if (searchActive) {
+            document.getElementById('stop-lamp').classList.remove('hit');
+            traceInterval = setInterval(highSpeedSearch, 50); // Fast search step
         } else {
-            p[2]++; if(p[2]>=26){ p[2]=0; p[1]++; if(p[1]>=26){ p[1]=0; p[0]++; if(p[0]>=26) p=[0,0,0]; } }
-            setTimeout(scan, 10);
+            clearInterval(traceInterval);
         }
     }
+
+    // High Speed Logical Reduction Scan
+    function highSpeedSearch() {
+        if (!searchActive) return;
+
+        // Simulate the fast mechanical odometer step: R > M > L
+        // The Right rotor (Drums 3n+1) spins every step.
+        // We simulate this by stepping the logical 'odometer' readout.
+        currentSearchPos[2]++;
+        if (currentSearchPos[2] >= 26) {
+            currentSearchPos[2] = 0;
+            currentSearchPos[1]++;
+            if (currentSearchPos[1] >= 26) {
+                currentSearchPos[1] = 0;
+                currentSearchPos[0]++;
+                if (currentSearchPos[0] >= 26) currentSearchPos = [0,0,0]; // End of cycle
+            }
+        }
+
+        updateOdometer();
+        const posStr = currentSearchPos.map(idx => alphabet[idx]).join("");
+
+        // Simulate a logical contradiction trace entry
+        // Historically, the Bombe tested thecrib vs theInterpreted ciphertext and stopped if all logic chains failed.
+        // We simulate this rapid evaluation with green monitor text.
+        const monitor = document.getElementById('trace-monitor');
+        const entry = document.createElement('div');
+        entry.innerHTML = `> TEST ${posStr}: CONTRADICTION FOUND AT BANK ${Math.floor(Math.random()*3)+1}`;
+        monitor.prepend(entry);
+        
+        // Clean old trace lines
+        if (monitor.childNodes.length > 20) monitor.removeChild(monitor.lastChild);
+
+        // --- THE STOP LOGIC (Synchronized to lab) ---
+        // If the 'odometer' matches the pre-defined target key (ZZZ).
+        if (currentSearchPos.every((val, index) => val === targetKey[index])) {
+            foundHit(posStr);
+        }
+    }
+
+    // Found a logical 'Stop'
+    function foundHit(posStr) {
+        searchActive = false;
+        clearInterval(traceInterval);
+        document.getElementById('run-btn').innerText = "RUN MOTOR";
+        document.getElementById('run-btn').style.backgroundColor = "#4a0000";
+        document.getElementById('stop-lamp').classList.add('hit');
+
+        const monitor = document.getElementById('trace-monitor');
+        monitor.innerHTML = `<span style="color:yellow; font-weight:bold;">*** VALID CHAIN DETECTED AT [${posStr}] ***</span><br>` + monitor.innerHTML;
+        
+        // Final success output
+        alert(`BOMBE STOP: A potential rotor setting was confirmed at [${posStr}]. Decryption protocol initiated.`);
+    }
+
+    // --- MANUAL CONTROLS ---
+
+    function stepDrum(idx) {
+        if(searchActive) return; // Cant manually turn when motor runs
+        scramblers[idx] = (scramblers[idx] + 1) % 26;
+        const drum = document.getElementById(`drum-${idx}`);
+        drum.classList.add('step-down');
+        // Visual Update
+        drum.innerHTML = `<div class="rotor-letter">${alphabet[scramblers[idx]]}</div>`;
+        setTimeout(() => drum.classList.remove('step-down'), 100);
+    }
+
+    function fullReset() {
+        searchActive = false;
+        clearInterval(traceInterval);
+        document.getElementById('run-btn').innerText = "RUN MOTOR";
+        document.getElementById('run-btn').style.backgroundColor = "#4a0000";
+        document.getElementById('stop-lamp').classList.remove('hit');
+        currentSearchPos = [0, 0, 0];
+        updateOdometer();
+        document.getElementById('trace-monitor').innerHTML = "> SYSTEM RESET... [AAA]";
+    }
+
+    function updateOdometer() {
+        const display = document.getElementById('pos-display');
+        display.innerText = currentSearchPos.map(idx => alphabet[idx]).join("");
+    }
+
 </script>
 </body>
 </html>
