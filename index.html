@@ -2,62 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bombe Model G: Logic Unit</title>
+    <title>Bombe Re-Construction: Mechanical Logic Bank</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
-        :root { --bakelite: #1a1a1a; --brass: #b08d57; }
-        body { background: #080808; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
-        .chassis { background: #1a1a1a; border: 10px solid #000; padding: 25px; width: 95vw; max-width: 1100px; box-shadow: 0 50px 100px #000; }
-        .header { text-align: center; color: var(--brass); letter-spacing: 4px; border-bottom: 2px solid #333; padding-bottom: 10px; text-transform: uppercase; margin: 0 0 20px 0; }
+        
+        :root { --bakelite: #0d0d0d; --brass: #c5a059; --glow: #00ff41; }
 
-        .rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; background: #000; padding: 20px; margin-bottom: 25px; border: 2px solid #222; }
-        .drum {
-            width: 60px; height: 60px; border-radius: 50%;
-            background: radial-gradient(circle, #444 0%, #111 60%, #000 100%);
-            border: 4px solid #333; position: relative;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
+        body { background: #050505; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        
+        .chassis { 
+            background: #111; border: 4px solid #333; padding: 30px; width: 95vw; max-width: 1100px;
+            box-shadow: 0 0 100px #000; position: relative;
         }
-        .active-letter { font-size: 24px; color: #fff; font-weight: bold; z-index: 5; pointer-events: none; }
-        .center-hub { width: 14px; height: 14px; background: var(--brass); border-radius: 50%; position: absolute; z-index: 4; border: 1px solid #000; }
 
+        .header { 
+            text-align: center; color: var(--brass); letter-spacing: 5px; 
+            border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 25px;
+        }
+
+        /* MECHANICAL RACK WITH RULER MARKS */
+        .rack { 
+            display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; 
+            background: #000; padding: 25px; border: 2px solid #222; margin-bottom: 30px;
+        }
+
+        .drum {
+            width: 65px; height: 65px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #333 0%, #000 80%);
+            border: 2px solid #222; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 8px #000; cursor: pointer; transition: transform 0.1s linear;
+        }
+
+        /* The Ruler Marks around the rotor */
+        .drum::before {
+            content: "A . C . E . G . I . K . M . O . Q . S . U . W . Y .";
+            position: absolute; width: 100%; height: 100%; font-size: 7px;
+            color: rgba(255,255,255,0.2); text-align: center; display: flex; align-items: center; justify-content: center;
+        }
+
+        .active-letter { font-size: 28px; color: #fff; font-weight: bold; z-index: 5; text-shadow: 0 0 5px #fff; }
+
+        /* PANELS */
         .panel-grid { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px; }
-        .sub-panel { background: #0f0f0f; border: 1px solid #333; padding: 15px; border-radius: 4px; }
-        .label { font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
-        input { background: #000; color: #00ff41; border: 1px solid #444; padding: 10px; font-family: 'Fira Code'; font-size: 13px; width: 90%; margin-bottom: 12px; }
-        .screen { background: #000b00; color: #00ff41; height: 140px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #002200; border-radius: 4px; }
-        button { background: #4a0000; color: white; border: 3px solid #000; padding: 18px; cursor: pointer; font-family: 'Special Elite'; width: 100%; font-size: 18px; }
-        .odo { font-size: 38px; color: var(--brass); background: #000; text-align: center; letter-spacing: 8px; border: 1px solid #333; margin-bottom: 10px; }
-        .lamp { width: 40px; height: 40px; border-radius: 50%; background: #200; border: 3px solid #000; margin: 10px auto; }
-        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; }
-        .fixed-badge { color: #555; font-size: 9px; margin-top: -10px; margin-bottom: 15px; display: block; }
+        .sub-panel { background: #0a0a0a; border: 1px solid #222; padding: 20px; border-radius: 4px; }
+        .label { font-size: 10px; color: #555; text-transform: uppercase; margin-bottom: 8px; }
+        
+        input { 
+            background: #000; color: var(--glow); border: 1px solid #333; 
+            padding: 12px; font-family: 'Fira Code'; font-size: 14px; width: 90%; 
+            margin-bottom: 15px; text-transform: uppercase;
+        }
+
+        .screen { 
+            background: #000b00; color: var(--glow); height: 150px; 
+            padding: 15px; border: 1px solid #003300; font-family: 'Fira Code'; font-size: 12px;
+            overflow-y: auto; line-height: 1.4;
+        }
+
+        /* ODOMETER - USER CAN ENTER START POSITION HERE */
+        .odo { 
+            font-size: 45px; color: var(--brass); background: #000; 
+            text-align: center; letter-spacing: 15px; border: 1px solid #222; margin-bottom: 15px;
+            cursor: text;
+        }
+
+        button { 
+            background: #4a0000; color: #fff; border: 2px solid #000; 
+            padding: 20px; width: 100%; cursor: pointer; font-size: 20px;
+        }
+
+        .lamp { width: 45px; height: 45px; border-radius: 50%; background: #200; border: 3px solid #000; margin: 15px auto; }
+        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 40px #f00; }
     </style>
 </head>
 <body onload="init()">
 
     <div class="chassis">
-        <h1 class="header">Bombe Model G: Logic Unit</h1>
-        <span class="fixed-badge" style="text-align:center;">HARDWARE CONFIGURATION LOCKED: ROTORS I - II - III (UKW-B)</span>
-        
+        <h1 class="header">Bombe Re-Construction: Mechanical Logic Bank</h1>
         <div class="rack" id="rack"></div>
 
         <div class="panel-grid">
             <div class="sub-panel">
-                <div class="label">Intercepted Ciphertext</div>
-                <input type="text" id="cipher-in" placeholder="PASTE FROM ENIGMA...">
-                <div class="label">Believed Crib (Target Word)</div>
-                <input type="text" id="crib-in" placeholder="e.g., WEATHER">
+                <div class="label">Incoming Intercept</div>
+                <input type="text" id="cipher-in" placeholder="PASTE CIPHER...">
+                <div class="label">English Crib (Guess)</div>
+                <input type="text" id="crib-in" placeholder="WORLD">
             </div>
 
             <div class="sub-panel">
-                <div class="label">Logic Monitor</div>
-                <div class="screen" id="log">> SYSTEM IDLE... AWAITING DATA.</div>
+                <div class="label">Logical Contradiction Trace</div>
+                <div class="screen" id="log">> STANDBY: AWAITING INTERCEPT...</div>
             </div>
 
             <div class="sub-panel" style="text-align:center;">
-                <div class="odo" id="odo">AAA</div>
+                <div class="label">Manual Rotor Set (Click Drums or Type Below)</div>
+                <input type="text" id="odo-input" class="odo" maxlength="3" value="AAA" oninput="manualOdoUpdate()">
                 <div class="lamp" id="stop-lamp"></div>
-                <button id="run-btn" onclick="toggleBombe()">START MOTOR</button>
+                <button id="run-btn" onclick="toggleBombe()">RUN MOTOR</button>
             </div>
         </div>
     </div>
@@ -66,44 +108,50 @@
     const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let isRunning = false, p = [0, 0, 0];
     
-    // LOCKED TO ROTORS I, II, III (Standard for most Enigma sites)
+    // LOCKED TO ROTORS I, II, III (Reflector B)
     const rotors = ["EKMFLGDQVZNTOWYHXUSPAIBRCJ", "AJDKSIRUXBLHWTMCQGZNPYFVOE", "BDFHJLCPRTXVZNYEIWGAKMUSQO"];
     const reflector = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
 
     function init() {
         const rack = document.getElementById('rack');
         for (let i = 0; i < 36; i++) {
-            rack.innerHTML += `<div class="drum-unit"><div class="drum" id="d-${i}" onclick="manualRotate(${i % 3})"><div class="center-hub"></div><div class="active-letter">A</div></div></div>`;
+            rack.innerHTML += `<div class="drum" id="d-${i}" onclick="manualRotorClick(${i%3})"><div class="active-letter">A</div></div>`;
         }
     }
 
-    function manualRotate(rotorIdx) {
-        if (isRunning) return;
-        p[rotorIdx] = (p[rotorIdx] + 1) % 26;
+    function manualRotorClick(idx) {
+        if(isRunning) return;
+        p[idx] = (p[idx] + 1) % 26;
         updateVisuals();
+    }
+
+    function manualOdoUpdate() {
+        let val = document.getElementById('odo-input').value.toUpperCase().replace(/[^A-Z]/g, "");
+        if(val.length === 3) {
+            p = val.split('').map(char => alpha.indexOf(char));
+            updateVisuals(false); // Update drums without rewriting the input
+        }
     }
 
     function enigmaMap(char, pos) {
         let c = alpha.indexOf(char);
         for(let i=2; i>=0; i--) {
-            let shift = pos[i];
-            c = (alpha.indexOf(rotors[i][(c + shift + 26) % 26]) - shift + 26) % 26;
+            c = (alpha.indexOf(rotors[i][(c + pos[i] + 26) % 26]) - pos[i] + 26) % 26;
         }
         c = alpha.indexOf(reflector[c]);
         for(let i=0; i<3; i++) {
-            let shift = pos[i];
-            let target = alpha[(c + shift + 26) % 26];
-            c = (rotors[i].indexOf(target) - shift + 26) % 26;
+            let target = alpha[(c + pos[i] + 26) % 26];
+            c = (rotors[i].indexOf(target) - pos[i] + 26) % 26;
         }
         return alpha[c];
     }
 
     function toggleBombe() {
         isRunning = !isRunning;
-        document.getElementById('run-btn').innerText = isRunning ? "STOP MOTOR" : "START MOTOR";
+        document.getElementById('run-btn').innerText = isRunning ? "STOP MOTOR" : "RUN MOTOR";
         if(isRunning) {
             document.getElementById('stop-lamp').classList.remove('hit');
-            document.getElementById('log').innerHTML = "> SCANNING LOGICAL POSSIBILITIES...<br>" + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = "> MOTOR START... SEARCHING<br>" + document.getElementById('log').innerHTML;
             scan();
         }
     }
@@ -112,38 +160,32 @@
         if(!isRunning) return;
         const cipher = document.getElementById('cipher-in').value.toUpperCase().replace(/[^A-Z]/g, "");
         const crib = document.getElementById('crib-in').value.toUpperCase().replace(/[^A-Z]/g, "");
-        
-        if(!cipher || !crib) { 
-            document.getElementById('log').innerHTML = "<span style='color:red'>> ERROR: MISSING DATA.</span><br>";
-            isRunning = false; return; 
-        }
+        if(!cipher || !crib) { isRunning = false; return; }
 
-        let found = false;
-        // Test current rotor setting
-        let match = true;
+        let match = false;
+        // Check current position
+        let test = true;
         for(let i = 0; i < crib.length; i++) {
-            let currentStep = [...p];
-            currentStep[2] = (currentStep[2] + i) % 26; 
-            if(enigmaMap(crib[i], currentStep) !== cipher[i]) {
-                match = false; break;
-            }
+            let pos = [...p];
+            pos[2] = (pos[2] + i) % 26; 
+            if(enigmaMap(crib[i], pos) !== cipher[i]) { test = false; break; }
         }
-        if(match) { found = true; }
+        if(test) match = true;
 
-        if(found) {
+        if(match) {
             document.getElementById('stop-lamp').classList.add('hit');
-            document.getElementById('log').innerHTML = `<span style="color:yellow">*** VALID HIT AT ${p.map(x=>alpha[x]).join("")} ***</span><br>` + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = `<span style="color:yellow">*** HIT AT ${p.map(x=>alpha[x]).join("")} ***</span><br>` + document.getElementById('log').innerHTML;
             isRunning = false;
-            document.getElementById('run-btn').innerText = "START MOTOR";
+            document.getElementById('run-btn').innerText = "RUN MOTOR";
         } else {
             p[2]++;
             if(p[2] >= 26) { p[2] = 0; p[1]++; }
             if(p[1] >= 26) { p[1] = 0; p[0]++; }
-            
             if(p[0] >= 26) { 
                 isRunning = false; 
-                document.getElementById('log').innerHTML = "<span style='color:red'>> SEARCH COMPLETE: NO LOGICAL MATCHES FOUND.</span><br>";
+                document.getElementById('log').innerHTML = "<span style='color:red'>> SCAN COMPLETE: NO MATCHES.</span><br>";
                 p = [0,0,0];
+                updateVisuals();
                 return; 
             }
             updateVisuals();
@@ -151,16 +193,15 @@
         }
     }
 
-    function updateVisuals() {
-        document.getElementById('odo').innerText = p.map(x => alpha[x]).join("");
+    function updateVisuals(updateInput = true) {
+        if(updateInput) document.getElementById('odo-input').value = p.map(x => alpha[x]).join("");
         for(let i=0; i<36; i++) {
-            let rot = p[i % 3] * (360/26);
             let d = document.getElementById(`d-${i}`);
-            if(d) {
-                d.style.transform = `rotate(${rot}deg)`;
-                d.querySelector('.active-letter').innerText = alpha[p[i % 3]];
-                d.querySelector('.active-letter').style.transform = `rotate(-${rot}deg)`;
-            }
+            let rot = p[i%3] * (360/26);
+            d.style.transform = `rotate(${rot}deg)`;
+            let letter = d.querySelector('.active-letter');
+            letter.innerText = alpha[p[i%3]];
+            letter.style.transform = `rotate(-${rot}deg)`;
         }
     }
 </script>
