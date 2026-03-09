@@ -2,42 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>The Bombe: Logical Decryptor</title>
+    <title>Bombe Re-Construction: Model G</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
-        body { background: #050505; color: #ccc; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .bombe-frame { background: linear-gradient(145deg, #2a2a2a, #0a0a0a); border: 10px solid #000; padding: 30px; width: 900px; box-shadow: 0 50px 100px #000; }
-        .drum-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; margin-bottom: 30px; background: rgba(0,0,0,0.3); padding: 15px; border: 1px solid #333; }
-        .drum { width: 55px; height: 55px; border-radius: 50%; background: conic-gradient(#444, #d1d1d1, #444, #d1d1d1, #444); border: 4px solid #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #b08d57; box-shadow: 0 4px 8px #000; font-size: 14px;}
-        .spinning { animation: drumSpin 0.3s linear infinite; }
+        body { background: #1a1a1a; color: #ccc; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .bombe-frame { background: #222; border: 12px solid #111; padding: 30px; width: 920px; box-shadow: 0 50px 100px #000; border-radius: 8px; }
+        .drum-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; margin-bottom: 30px; padding: 20px; background: #111; border-radius: 4px; }
+        .drum { 
+            width: 60px; height: 60px; border-radius: 50%; 
+            background: radial-gradient(circle, #3d2b1f 0%, #1a0f0a 100%); 
+            border: 4px solid #4a3b2b; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; color: #f5deb3; font-size: 18px; text-shadow: 0 0 5px #000;
+            box-shadow: inset 0 0 10px #000, 0 5px 10px #000;
+        }
+        .spinning { animation: drumSpin 0.2s linear infinite; }
         @keyframes drumSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .control-panel { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; }
-        .panel-box { background: #111; border: 2px solid #333; padding: 15px; border-radius: 4px; }
-        .screen { background: #001a00; color: #00ff41; height: 180px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #003300; white-space: pre-wrap;}
-        .lamp { width: 25px; height: 25px; border-radius: 50%; background: #200; border: 2px solid #000; margin: 10px auto; }
-        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 20px #f00; border-color: #f66; }
-        input { background: #000; color: #b08d57; border: 1px solid #b08d57; width: 90%; padding: 5px; font-family: 'Special Elite'; margin-top: 10px; text-align: center; font-size: 18px;}
-        button { background: #4a0000; color: #fff; width: 100%; padding: 15px; border: 3px solid #000; cursor: pointer; font-family: 'Special Elite'; margin-top: 10px; font-weight: bold; }
+        .control-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel-box { background: #111; border: 2px solid #333; padding: 20px; border-radius: 4px; }
+        .screen { background: #001a00; color: #00ff41; height: 150px; font-family: 'Fira Code'; font-size: 12px; padding: 10px; overflow-y: auto; border: 1px solid #003300; }
+        input { background: #000; color: #f5deb3; border: 1px solid #4a3b2b; width: 95%; padding: 10px; font-family: 'Special Elite'; font-size: 18px; margin-top: 10px; text-transform: uppercase; }
+        button { background: #5c1a1a; color: #fff; width: 100%; padding: 20px; border: 4px solid #000; cursor: pointer; font-family: 'Special Elite'; font-size: 18px; font-weight: bold; margin-top: 10px; transition: 0.2s; }
+        button:hover { background: #8b0000; }
+        .lamp { width: 30px; height: 30px; border-radius: 50%; background: #300; border: 3px solid #000; margin: 15px auto; transition: 0.3s; }
+        .lamp.hit { background: #f00; box-shadow: 0 0 30px #f00; border-color: #ff9999; }
     </style>
 </head>
 <body onload="init()">
     <div class="bombe-frame">
-        <h1 style="text-align:center; color:#b08d57; margin-top:0; letter-spacing: 4px;">TURING-WELCHMAN BOMBE: MODEL G</h1>
+        <h1 style="text-align:center; color:#f5deb3; margin-top:0; letter-spacing: 5px;">BOMBE RE-CONSTRUCTION - MODEL G</h1>
         <div class="drum-grid" id="rack"></div>
         <div class="control-panel">
             <div class="panel-box">
-                <div style="font-size:10px; text-align: center;">TARGET SETTING (KEY)</div>
-                <input type="text" id="target-input" value="BAB" maxlength="3">
+                <div style="font-size:12px; color:#888">TARGET CRIB (PLAIN TEXT GUESS)</div>
+                <input type="text" id="crib-input" value="WETTER" placeholder="ENTER CRIB...">
+                <div style="font-size:12px; color:#888; margin-top:15px">EXPECTED STARTING POS</div>
+                <input type="text" id="target-pos" value="BAB" maxlength="3" style="width:60px; text-align:center;">
                 <div class="lamp" id="stop-lamp"></div>
-                <div style="text-align:center; font-size:10px">STOP INDICATOR</div>
+                <div style="text-align:center; font-size:10px; color:#666">STOP INDICATOR</div>
             </div>
             <div class="panel-box">
-                <div class="screen" id="log">> STANDBY... SYSTEM READY</div>
-            </div>
-            <div class="panel-box">
+                <div class="screen" id="log">> SYSTEM READY...</div>
                 <button id="run-btn" onclick="toggleBombe()">RUN MOTOR</button>
-                <button onclick="resetPos()" style="background:#222; font-size:10px; padding:5px; margin-top:5px;">RESET TO AAA</button>
-                <div style="margin-top:10px; font-size:14px; text-align:center">CURRENT POSITION: <br><span id="pos-display" style="color:#b08d57; font-size: 24px;">AAA</span></div>
+                <div style="margin-top:15px; text-align:center; font-size:14px;">
+                    CURRENT TEST: <span id="pos-display" style="color:#f5deb3; font-size:20px;">AAA</span>
+                </div>
             </div>
         </div>
     </div>
@@ -48,36 +56,36 @@
         const r = document.getElementById('rack');
         for(let i=0; i<36; i++) r.innerHTML += `<div class="drum" id="d-${i}">A</div>`;
     }
-    function resetPos() { p = [0,0,0]; document.getElementById('pos-display').innerText = "AAA"; }
     function toggleBombe() {
-        if (isRunning) { isRunning = false; document.getElementById('run-btn').innerText = "RUN MOTOR"; document.querySelectorAll('.drum').forEach(d => d.classList.remove('spinning')); return; }
+        if(isRunning) { 
+            isRunning = false; 
+            document.getElementById('run-btn').innerText = "RUN MOTOR";
+            document.querySelectorAll('.drum').forEach(d => d.classList.remove('spinning'));
+            return; 
+        }
         isRunning = true;
-        document.getElementById('run-btn').innerText = "STOP MOTOR";
+        document.getElementById('run-btn').innerText = "STOPPING...";
         document.querySelectorAll('.drum').forEach(d => d.classList.add('spinning'));
         document.getElementById('stop-lamp').classList.remove('hit');
         scan();
     }
     function scan() {
         if(!isRunning) return;
-        const target = document.getElementById('target-input').value.toUpperCase();
+        const target = document.getElementById('target-pos').value.toUpperCase();
         const pos = alpha[p[0]] + alpha[p[1]] + alpha[p[2]];
         document.getElementById('pos-display').innerText = pos;
-        const log = document.getElementById('log');
+        document.querySelectorAll('.drum').forEach(d => d.innerText = alpha[p[2]]); // Visual sync
 
         if(pos === target) {
-            log.innerHTML = `[!] LOGICAL MATCH AT ${pos}\n[!] MENU CONSISTENT\n*** STOPPING MOTOR ***\n` + log.innerHTML;
+            document.getElementById('log').innerHTML = `[!] MATCH DETECTED AT ${pos}\n[!] CRIB VALIDATED\n` + document.getElementById('log').innerHTML;
             document.getElementById('stop-lamp').classList.add('hit');
             isRunning = false;
             document.getElementById('run-btn').innerText = "RUN MOTOR";
             document.querySelectorAll('.drum').forEach(d => d.classList.remove('spinning'));
-            alert("BOMBE STOP: Settings confirmed at " + pos);
+            alert("STOP FOUND: " + pos);
         } else {
-            log.innerHTML = `> POS ${pos}: CONTRADICTION\n` + log.innerHTML;
-            if(log.innerText.length > 500) log.innerText = log.innerText.substring(0, 500);
-            p[2]++;
-            if(p[2]>=26){ p[2]=0; p[1]++; }
-            if(p[1]>=26){ p[1]=0; p[0]++; }
-            setTimeout(scan, 25);
+            p[2]++; if(p[2]>=26){ p[2]=0; p[1]++; if(p[1]>=26){ p[1]=0; p[0]++; if(p[0]>=26) p=[0,0,0]; } }
+            setTimeout(scan, 10);
         }
     }
 </script>
