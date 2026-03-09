@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bletchley Park: Bombe Terminal</title>
+    <title>Bombe Model G: Research Terminal</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
         :root { --bakelite: #1a1a1a; --brass: #b08d57; }
-        body { background: #080808; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
-        .chassis { background: #1a1a1a; border: 10px solid #000; padding: 25px; width: 95vw; max-width: 1100px; box-shadow: 0 50px 100px #000; }
-        .header { text-align: center; color: var(--brass); letter-spacing: 4px; border-bottom: 2px solid #333; padding-bottom: 10px; text-transform: uppercase; }
+        body { background: #080808; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; overflow-x: hidden; }
+        .chassis { background: #1a1a1a; border: 10px solid #000; padding: 25px; width: 95vw; max-width: 1100px; box-shadow: 0 50px 100px #000; z-index: 2; }
+        .header { text-align: center; color: var(--brass); letter-spacing: 4px; border-bottom: 2px solid #333; padding-bottom: 10px; text-transform: uppercase; margin-top: 0; }
 
         /* THE DRUMS */
         .rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; background: #000; padding: 20px; margin-bottom: 25px; border: 2px solid #222; }
@@ -32,29 +32,53 @@
         .sub-panel { background: #0f0f0f; border: 1px solid #333; padding: 15px; border-radius: 4px; }
         .label { font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
         input, select { background: #000; color: #00ff41; border: 1px solid #444; padding: 10px; font-family: 'Fira Code'; font-size: 13px; width: 90%; margin-bottom: 12px; }
-        .screen { background: #000b00; color: #00ff41; height: 140px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #002200; }
-        button { background: #4a0000; color: white; border: 3px solid #000; padding: 18px; cursor: pointer; font-family: 'Special Elite'; width: 100%; font-size: 18px; }
+        .screen { background: #000b00; color: #00ff41; height: 140px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #002200; border-radius: 4px; }
+        button { background: #4a0000; color: white; border: 3px solid #000; padding: 18px; cursor: pointer; font-family: 'Special Elite'; width: 100%; font-size: 18px; border-radius: 2px; }
         .odo { font-size: 38px; color: var(--brass); background: #000; text-align: center; letter-spacing: 8px; border: 1px solid #333; margin-bottom: 10px; }
         .lamp { width: 40px; height: 40px; border-radius: 50%; background: #200; border: 3px solid #000; margin: 10px auto; }
-        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; }
+        .lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; border-color: #ffcccc; }
+
+        /* SECRET INSTRUCTOR OVERLAY */
+        #instructor-panel {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 9999; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .instr-box { background: #111; border: 2px dashed #800; padding: 40px; text-align: center; }
     </style>
 </head>
 <body onload="init()">
 
+    <div id="instructor-panel">
+        <div class="instr-box">
+            <h2 style="color:#800;">INSTRUCTOR MASTER KEYSET</h2>
+            <div class="label">Set Target Rotor Setting (e.g. AJQ)</div>
+            <input type="text" id="target-key" value="AJQ" maxlength="3" style="font-size: 30px; text-align: center; width: 150px;">
+            <div class="label">Set Target Rotor Order</div>
+            <select id="target-order" style="width: 200px;">
+                <option value="123">I - II - III</option>
+                <option value="425">IV - II - V</option>
+                <option value="135">I - III - V</option>
+            </select>
+            <p style="color: #555; font-size: 12px;">Press '`' (backtick) to hide this panel.</p>
+            <button onclick="hideInstructor()" style="background:#222; font-size: 14px; padding: 10px;">SAVE & EXIT</button>
+        </div>
+    </div>
+
     <div class="chassis">
-        <h1 class="header">Bombe Model G: Decryption Terminal</h1>
+        <h1 class="header">Bombe Model G: Mechanical Logic</h1>
         <div class="rack" id="rack"></div>
 
         <div class="panel-grid">
             <div class="sub-panel">
-                <div class="label">Hardware Config (Rotors)</div>
+                <div class="label">Hardware Setup (Rotors)</div>
                 <select id="user-order">
                     <option value="123">I - II - III</option>
                     <option value="425">IV - II - V</option>
                     <option value="135">I - III - V</option>
                 </select>
                 <div class="label">Intercepted Cipher</div>
-                <input type="text" placeholder="PASTE CODE HERE...">
+                <input type="text" placeholder="PASTE ENIGMA CODE...">
                 <div class="label">Crib Guess</div>
                 <input type="text" placeholder="WEATHER">
             </div>
@@ -62,7 +86,7 @@
             <div class="sub-panel">
                 <div class="label">Logic Monitor</div>
                 <div class="screen" id="log">> AWAITING SIGNAL...</div>
-                <div style="font-size:9px; color:var(--brass); margin-top:10px;">* CLICK DRUMS 1-3 TO SET START POSITION</div>
+                <div style="font-size:9px; color:var(--brass); margin-top:10px;">* CLICK DRUMS 1-3 TO MANUALLY SET START POSITION</div>
             </div>
 
             <div class="sub-panel" style="text-align:center;">
@@ -77,10 +101,15 @@
     const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let isRunning = false, p = [0, 0, 0];
     
-    // HIDDEN LOGIC: Reads from the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const TRUE_KEY = (urlParams.get('key') || "DFG").toUpperCase();
-    const TRUE_ORDER = urlParams.get('order') || "123";
+    // SECRET PANEL TOGGLE
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '`' || e.key === 'End') {
+            const panel = document.getElementById('instructor-panel');
+            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+        }
+    });
+
+    function hideInstructor() { document.getElementById('instructor-panel').style.display = 'none'; }
 
     function init() {
         const rack = document.getElementById('rack');
@@ -111,6 +140,7 @@
         document.getElementById('run-btn').innerText = isRunning ? "STOP MOTOR" : "RUN MOTOR";
         if(isRunning) {
             document.getElementById('stop-lamp').classList.remove('hit');
+            document.getElementById('log').innerHTML = "> MOTOR ENGAGED... SEARCHING LOGIC<br>" + document.getElementById('log').innerHTML;
             scan();
         }
     }
@@ -119,20 +149,28 @@
         if(!isRunning) return;
         const current = p.map(x => alpha[x]).join("");
         const order = document.getElementById('user-order').value;
+        
+        // READ THE SECRET TARGET
+        const TRUE_KEY = document.getElementById('target-key').value.toUpperCase();
+        const TRUE_ORDER = document.getElementById('target-order').value;
+
         document.getElementById('odo').innerText = current;
 
         if(current === TRUE_KEY && order === TRUE_ORDER) {
             document.getElementById('stop-lamp').classList.add('hit');
-            document.getElementById('log').innerHTML = `<span style="color:yellow">*** HIT DETECTED AT ${current} ***</span><br>` + document.getElementById('log').innerHTML;
+            document.getElementById('log').innerHTML = `<span style="color:yellow">*** LOGICAL HIT AT ${current} ***</span><br>` + document.getElementById('log').innerHTML;
             isRunning = false;
             document.getElementById('run-btn').innerText = "RUN MOTOR";
+            alert("BOMBE STOP: Settings confirmed at " + current);
         } else {
             p[2]++;
             if(p[2] >= 26) { p[2] = 0; p[1]++; }
             if(p[1] >= 26) { p[1] = 0; p[0]++; }
             if(p[0] >= 26) { 
                 isRunning = false; 
-                document.getElementById('log').innerHTML = "<span style='color:red'>> FULL CYCLE: NO MATCH.</span><br>";
+                document.getElementById('log').innerHTML = "<span style='color:red'>> ERROR: FULL CYCLE. NO MATCH FOUND.</span><br>";
+                p = [0,0,0];
+                updateVisuals();
                 return; 
             }
             updateVisuals();
