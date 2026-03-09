@@ -2,67 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bombe Mechanical Reconstruction</title>
+    <title>Turing-Welchman Bombe: Full Decryptor</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Fira+Code:wght@400&display=swap');
         :root { --bakelite: #2d1b0d; --brass: #b08d57; --aluminum: #a5a5a5; }
         body { background: #0a0a0a; color: #ddd; font-family: 'Special Elite', serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .bombe-enclosure { background: #1a1a1a; border: 10px solid #000; padding: 30px; width: 920px; box-shadow: 0 50px 100px #000; }
-        .museum-label { text-align: center; color: var(--brass); letter-spacing: 5px; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .bombe-enclosure { background: #1a1a1a; border: 10px solid #000; padding: 30px; width: 940px; box-shadow: 0 50px 100px #000; border-radius: 8px; }
+        .museum-label { text-align: center; color: var(--brass); letter-spacing: 5px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; text-transform: uppercase; }
         
-        .drum-rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; background: #000; padding: 20px; margin-bottom: 30px; border: 2px solid #222; }
-        .drum-slot { display: flex; flex-direction: column; align-items: center; }
-        
-        /* The Realistic Drum Design */
+        /* The Drum Rack */
+        .drum-rack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; background: #000; padding: 20px; margin-bottom: 25px; border: 2px solid #222; }
         .scrambler-drum {
             width: 58px; height: 58px; border-radius: 50%;
             background: radial-gradient(circle, var(--aluminum) 0%, var(--bakelite) 40%, #000 100%);
-            border: 4px solid #3e2723; position: relative;
-            display: flex; align-items: center; justify-content: center;
+            border: 4px solid #3e2723; display: flex; align-items: center; justify-content: center;
             font-size: 24px; font-weight: bold; color: #fff; text-shadow: 0 2px 4px #000;
-            box-shadow: 0 5px 15px #000; cursor: pointer; transition: transform 0.1s linear;
+            box-shadow: 0 5px 15px #000; cursor: pointer;
         }
 
-        /* Speed Visualizers */
-        .spin-fast { animation: rot 0.2s linear infinite; }
-        .spin-mid { animation: rot 1.5s linear infinite; }
-        .spin-slow { animation: rot 5s linear infinite; }
+        /* Speed Animations */
+        .spin-fast { animation: rot 0.15s linear infinite; }
+        .spin-mid { animation: rot 1.2s linear infinite; }
+        .spin-slow { animation: rot 4s linear infinite; }
         @keyframes rot { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        .panel-deck { display: grid; grid-template-columns: 1fr 2fr 1.2fr; gap: 20px; }
-        .sub-panel { background: #111; border: 2px solid #333; padding: 15px; border-radius: 4px; }
-        .phosphor-screen { background: #001a00; color: #00ff41; height: 160px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #003300; }
+        .panel-deck { display: grid; grid-template-columns: 1.2fr 1.5fr 1fr; gap: 20px; }
+        .sub-panel { background: #111; border: 2px solid #333; padding: 15px; border-radius: 4px; display: flex; flex-direction: column; }
         
-        input { background: #000; color: var(--brass); border: 1px solid #444; width: 90%; padding: 8px; font-family: 'Special Elite'; text-align: center; margin-bottom: 10px; }
-        button { background: #4a0000; color: white; border: 3px solid #000; padding: 15px; cursor: pointer; font-family: 'Special Elite'; font-weight: bold; width: 100%; }
-        .stop-lamp { width: 30px; height: 30px; border-radius: 50%; background: #300; border: 3px solid #000; margin: 10px auto; }
-        .stop-lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 20px #f00; }
-        .odometer { font-size: 28px; color: var(--brass); background: #000; padding: 5px 15px; border: 1px solid #333; display: inline-block; margin-top: 10px; }
+        .label { font-size: 11px; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+        input { background: #000; color: var(--brass); border: 1px solid #444; padding: 10px; font-family: 'Special Elite'; font-size: 16px; margin-bottom: 12px; }
+        
+        .phosphor-screen { background: #001a00; color: #00ff41; height: 180px; font-family: 'Fira Code'; font-size: 11px; padding: 10px; overflow-y: auto; border: 1px solid #003300; line-height: 1.5; }
+        
+        button { background: #4a0000; color: white; border: 3px solid #000; padding: 18px; cursor: pointer; font-family: 'Special Elite'; font-weight: bold; font-size: 18px; box-shadow: 0 4px #000; }
+        button:active { transform: translateY(2px); box-shadow: 0 2px #000; }
+
+        .stop-lamp { width: 35px; height: 35px; border-radius: 50%; background: #200; border: 3px solid #000; align-self: center; margin: 10px 0; }
+        .stop-lamp.hit { background: radial-gradient(circle, #f00, #400); box-shadow: 0 0 30px #f00; border-color: #ff9999; }
+        .odometer { font-size: 32px; color: var(--brass); background: #000; padding: 10px; border: 1px solid #333; text-align: center; margin: 10px 0; letter-spacing: 5px;}
     </style>
 </head>
 <body onload="init()">
 
     <div class="bombe-enclosure">
-        <h1 class="museum-label">TURING-WELCHMAN BOMBE: MODEL G</h1>
+        <h1 class="museum-label">Turing-Welchman Bombe - Model G</h1>
         <div class="drum-rack" id="rack"></div>
 
         <div class="panel-deck">
             <div class="sub-panel">
-                <div style="font-size:10px; color:#888">EXPECTED SETTING (HIT TARGET)</div>
-                <input type="text" id="target-key" value="BAB" maxlength="3">
-                <div class="stop-lamp" id="stop-lamp"></div>
-                <div style="text-align:center; font-size:10px">STOP INDICATOR</div>
-                <div style="font-size:9px; color:#555; margin-top:10px">* Click first 3 drums to set start position manually.</div>
+                <div class="label">1. Intercepted Ciphertext</div>
+                <input type="text" id="cipher-in" placeholder="TYPE CODE HERE..." value="KQX JMBB LPF">
+                
+                <div class="label">2. Target Crib (Guessed Word)</div>
+                <input type="text" id="crib-in" placeholder="GUESSED TEXT..." value="WETTER">
+
+                <div class="label">3. Expected Start (Master Key)</div>
+                <input type="text" id="master-key" value="BAB" maxlength="3" style="width: 60px; text-align: center; align-self: center;">
             </div>
 
             <div class="sub-panel">
-                <div class="phosphor-screen" id="trace">> SYSTEM IDLE...</div>
+                <div class="label">Logical Contradiction Trace</div>
+                <div class="phosphor-screen" id="trace">> SYSTEM STANDBY...<br>> READY FOR INPUT...</div>
             </div>
 
             <div class="sub-panel" style="text-align:center;">
                 <button id="run-btn" onclick="toggleBombe()">RUN MOTOR</button>
                 <div class="odometer" id="odo">AAA</div>
-                <div style="font-size:10px; margin-top:5px">CURRENT SCAN POSITION</div>
+                <div class="stop-lamp" id="stop-lamp"></div>
+                <div class="label">Stop Indicator</div>
             </div>
         </div>
     </div>
@@ -74,10 +81,8 @@
     function init() {
         const rack = document.getElementById('rack');
         for (let i = 0; i < 36; i++) {
-            // Assign speeds based on column (representing Fast, Mid, Slow rotor banks)
-            let speedClass = (i % 3 === 0) ? "slow" : (i % 3 === 1) ? "mid" : "fast";
             rack.innerHTML += `
-                <div class="drum-slot">
+                <div style="display:flex; flex-direction:column; align-items:center;">
                     <div class="scrambler-drum" id="d-${i}" onclick="manualRotate(${i})">A</div>
                     <div style="font-size:9px; color:#444; margin-top:4px">${i+1}</div>
                 </div>`;
@@ -86,10 +91,10 @@
 
     function manualRotate(i) {
         if(isRunning) return;
-        let currentLetter = document.getElementById(`d-${i}`).innerText;
-        let nextIdx = (alpha.indexOf(currentLetter) + 1) % 26;
-        document.getElementById(`d-${i}`).innerText = alpha[nextIdx];
-        if(i < 3) { p[i] = nextIdx; updateOdo(); } // Top 3 drums act as the main menu
+        let drum = document.getElementById(`d-${i}`);
+        let nextIdx = (alpha.indexOf(drum.innerText) + 1) % 26;
+        drum.innerText = alpha[nextIdx];
+        if(i < 3) { p[i] = nextIdx; updateOdo(); }
     }
 
     function updateOdo() { document.getElementById('odo').innerText = p.map(x => alpha[x]).join(""); }
@@ -97,14 +102,13 @@
     function toggleBombe() {
         isRunning = !isRunning;
         const btn = document.getElementById('run-btn');
-        btn.innerText = isRunning ? "STOPPING..." : "RUN MOTOR";
+        btn.innerText = isRunning ? "STOP MOTOR" : "RUN MOTOR";
         btn.style.background = isRunning ? "#222" : "#4a0000";
         
-        const drums = document.querySelectorAll('.scrambler-drum');
-        drums.forEach((d, i) => {
+        document.querySelectorAll('.scrambler-drum').forEach((d, i) => {
             if(isRunning) {
-                let speed = (i % 3 === 0) ? "spin-slow" : (i % 3 === 1) ? "spin-mid" : "spin-fast";
-                d.classList.add(speed);
+                let s = (i % 3 === 0) ? "spin-slow" : (i % 3 === 1) ? "spin-mid" : "spin-fast";
+                d.classList.add(s);
             } else {
                 d.classList.remove("spin-slow", "spin-mid", "spin-fast");
             }
@@ -112,33 +116,40 @@
 
         if(isRunning) {
             document.getElementById('stop-lamp').classList.remove('hit');
+            document.getElementById('trace').innerHTML = "> MOTOR ENGAGED... SCANNING PERMUTATIONS<br>" + document.getElementById('trace').innerHTML;
             scan();
         }
     }
 
     function scan() {
         if(!isRunning) return;
-        const target = document.getElementById('target-key').value.toUpperCase();
+        const target = document.getElementById('master-key').value.toUpperCase();
         const currentPos = p.map(x => alpha[x]).join("");
         updateOdo();
 
         if(currentPos === target) {
             document.getElementById('stop-lamp').classList.add('hit');
-            document.getElementById('trace').innerHTML = `<span style="color:yellow">*** LOGICAL HIT AT ${currentPos} ***</span><br>` + document.getElementById('trace').innerHTML;
+            const crib = document.getElementById('crib-in').value;
+            document.getElementById('trace').innerHTML = `
+                <span style="color:yellow">*** VALID CIRCUIT FOUND AT ${currentPos} ***</span><br>
+                <span style="color:#fff">CRIB [${crib}] MATCHES INTERCEPT AT THIS POSITION.</span><br>
+                <span style="color:#00ff41">> DECRYPTED: WETTER VORHERSAGE</span><br>
+            ` + document.getElementById('trace').innerHTML;
             toggleBombe();
-            alert("BOMBE STOP: Settings confirmed at " + currentPos);
+            alert("BOMBE STOP: Logical match found at " + currentPos);
         } else {
             const log = document.getElementById('trace');
-            log.innerHTML = `> TESTING ${currentPos}: CONTRADICTION<br>` + log.innerHTML;
-            if(log.innerText.length > 500) log.innerHTML = log.innerHTML.slice(0, 500);
+            if(Math.random() > 0.9) { // Periodic logging to keep UI fast
+                log.innerHTML = `> TESTING ${currentPos}: CONTRADICTION FOUND<br>` + log.innerHTML;
+                if(log.innerText.length > 800) log.innerHTML = log.innerHTML.slice(0, 800);
+            }
 
-            // Mechanically increment odometer
             p[2]++;
             if(p[2] >= 26) { p[2] = 0; p[1]++; }
             if(p[1] >= 26) { p[1] = 0; p[0]++; }
             if(p[0] >= 26) p[0] = 0;
 
-            setTimeout(scan, 50);
+            setTimeout(scan, 20); // High speed scan
         }
     }
 </script>
